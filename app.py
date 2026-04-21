@@ -520,7 +520,7 @@ def show_login():
                             st.session_state.user_name = row["full_name"]
                             st.session_state.user_company = row["company"]
                             st.session_state.user_role = row["role"]
-                            st.session_state.user_plan = row.get("plan","free")
+                            st.session_state.user_plan = "free"
                             saved = db.load_clients(row["id"])
                             if saved: st.session_state.clients = saved
                             st.session_state.screen = "upload" if not saved else "dashboard"
