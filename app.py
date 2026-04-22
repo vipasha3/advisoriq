@@ -1098,11 +1098,13 @@ def show_dashboard(clients):
                     tag = '<div style="font-size:10px;color:#3fb950;font-family:JetBrains Mono,monospace">🧠 AI Insight</div>'
             
                 # 👇 HTML inside
-                st.markdown(f"""<div class="mlxpand">
+                st.markdown(f"""
+                <div class="mlxpand">
                   {tag}
                   <div class="mlfl">⊕ Model feature importance</div>
                   <div class="mlft">↳ {feat}</div>
-                </div>""", unsafe_allow_html=True)
+                </div>
+                """, unsafe_allow_html=True)
                 
 
         if len(clients)>15:
