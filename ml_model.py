@@ -52,23 +52,40 @@ def load_model():
 def get_top_feature(model, vals):
     return "Portfolio strength is driving this client’s priority."
 
-def predict_batch(clients):
-    model = load_model()
-    X = np.array([extract_features(c) for c in clients])
-    probs = model.predict_proba(X)[:,1]
+def predict_batch(clients: list) -> list:
+    if not clients:
+        return []
 
-    results = []
-    for i,c in enumerate(clients):
-        score = int(probs[i]*100)
+    results = []  # 👈 IMPORTANT (try ni bahar)
 
-        results.append({
-            **c,
-            "score": score,
-            "churn": 100-score,
-            "conv": score,
-            "priority": "High" if score>70 else "Medium",
-            "feature_importance": get_top_feature(model, X[i]),
-            "ml_powered": True
-        })
+    try:
+        pm, cm = load_models()
+        X = np.array([extract_features(c) for c in clients])
 
-    return results
+        priority_probs = pm.predict_proba(X)[:, 1]
+        churn_probs    = cm.predict_proba(X)[:, 1]
+
+        for i, c in enumerate(clients):
+            score = round(priority_probs[i] * 100)
+            churn = round(churn_probs[i] * 100)
+            conv  = min(95, max(5, round(score * 0.65 + (100 - churn) * 0.35)))
+
+            feat_text = get_top_feature(pm, X[i])
+
+            results.append({
+                **c,
+                "score": score,
+                "churn": churn,
+                "conv": conv,
+                "priority": "High" if score >= 70 else ("Medium" if score >= 45 else "Low"),
+                "feature_importance": feat_text,
+                "ml_powered": True,
+            })
+
+        return results
+
+    except Exception as e:
+        logger.warning(f"Batch ML failed, using rules: {e}")
+
+        # 👇 fallback
+        return [_rule_predict(c) | c for c in clients]
