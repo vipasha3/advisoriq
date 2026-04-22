@@ -6,6 +6,30 @@ import urllib.parse
 from io import BytesIO
 from ml_model import predict_batch
 
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+html, body, [class*="css"]  {
+    font-family: 'Inter', sans-serif;
+}
+</style>
+""", unsafe_allow_html=True)
+
+if theme == "Light":
+    st.markdown("""
+    <style>
+    body { background-color: white; color: black; }
+    </style>
+    """, unsafe_allow_html=True)
+
+else:
+    st.markdown("""
+    <style>
+    body { background-color: #0E1117; color: white; }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 # ── Module imports (graceful fallback) ───────────────────────────────────────
 try:
