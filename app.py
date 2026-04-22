@@ -9,6 +9,7 @@ import urllib.parse
 from io import BytesIO
 from ml_model import predict_batch
 
+
 # ── Module imports (graceful fallback) ───────────────────────────────────────
 try:
     import database as db
