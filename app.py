@@ -6,13 +6,44 @@ import urllib.parse
 from io import BytesIO
 from ml_model import predict_batch
 
-st.markdown("""
-<style>
-html, body, [class*="css"]  {
-    font-family: 'Inter', 'Segoe UI', sans-serif;
-}
-</style>
-""", unsafe_allow_html=True)
+st.set_page_config(page_title="My App", layout="wide")
+
+# -----------------------------
+# THEME TOGGLE
+# -----------------------------
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+
+def toggle_theme():
+    if st.session_state.theme == "light":
+        st.session_state.theme = "dark"
+    else:
+        st.session_state.theme = "light"
+
+st.sidebar.button("🌗 Toggle Theme", on_click=toggle_theme)
+
+def apply_theme():
+    if st.session_state.theme == "dark":
+        bg = "#0e1117"
+        text = "#ffffff"
+    else:
+        bg = "#ffffff"
+        text = "#000000"
+
+    st.markdown(f"""
+        <style>
+        html, body, [class*="css"]  {{
+            font-family: 'Inter', sans-serif;
+        }}
+
+        .stApp {{
+            background-color: {bg};
+            color: {text};
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
+apply_theme()
 
 
 
