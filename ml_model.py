@@ -283,7 +283,7 @@ def predict_batch(clients: list) -> list:
                 "churn": churn,
                 "conv": conv,
                 "priority": "High" if score >= 70 else ("Medium" if score >= 45 else "Low"),
-                "feature_importance": get_top_feature(pm, X[i]),
+                "feature_importance": feat_text,
                 "ml_powered": True,
             })
         return results
