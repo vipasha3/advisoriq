@@ -51,28 +51,24 @@ def load_model():
 
 def get_top_feature(model, sample):
     try:
-        import numpy as np
+        portfolio = sample[0]
+        sip = sample[1]
+        age = sample[2]
+        inactive = sample[3]
 
-        # 👇 get actual classifier from pipeline
-        clf = model.named_steps["clf"]
-
-        importances = clf.feature_importances_
-        idx = int(np.argmax(importances))
-
-        feature_names = [
-            "Portfolio size",
-            "SIP amount",
-            "Age factor",
-            "Inactivity level"
-        ]
-
-        if idx < len(feature_names):
-            return f"{feature_names[idx]} is the primary driver"
-
-        return "Multiple factors influencing score"
+        if portfolio > 5:
+            return f"Client has ₹{int(portfolio*1e6):,} portfolio which is boosting priority score"
+        elif sip > 2:
+            return f"Client invests ₹{int(sip*1e4):,}/month via SIP which improves health score"
+        elif inactive > 6:
+            return f"Client inactive for {int(inactive)} months → churn risk increasing"
+        elif age > 50:
+            return "Client age factor influencing conservative investment behavior"
+        else:
+            return "Balanced profile with moderate growth potential"
 
     except Exception as e:
-        return f"Model insight error: {e}"
+        return f"Insight error: {e}"
         
 def predict_batch(clients: list) -> list:
     if not clients:
