@@ -1086,6 +1086,7 @@ def show_dashboard(clients):
                 if st.button("\u25b2" if is_me else "\u25bc", key=f"me_{i}"):
                     st.session_state.ml_exp = None if is_me else i; st.rerun()
             if is_me:
+                st.write(c)
                 feat = c.get("feature_importance", "No insight available")
             
                 # 👇 Python logic outside
