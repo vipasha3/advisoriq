@@ -51,17 +51,17 @@ def load_model():
 
 def get_top_feature(model, sample):
     try:
-        # 👇 safe conversion
-        portfolio = float(sample[0])
-        sip = float(sample[1])
+        portfolio = float(sample[0])   # already /1e6
+        sip = float(sample[1])         # already /1e4
         age = float(sample[2])
         inactive = float(sample[3])
 
+        # 👇 normalize everything to similar scale
         scores = {
-            "portfolio": portfolio * 2,
-            "sip": sip * 1.5,
-            "inactive": inactive * 2,
-            "age": age * 0.5
+            "portfolio": portfolio,           # ~0–10
+            "sip": sip,                       # ~0–5
+            "inactive": inactive / 6,         # scale down
+            "age": age / 50                   # 👈 FIX (now ~0–1)
         }
 
         top = max(scores, key=scores.get)
@@ -78,7 +78,7 @@ def get_top_feature(model, sample):
         return "Balanced profile"
 
     except Exception as e:
-        print("INSIGHT ERROR:", e)   # 👈 debug
+        print("INSIGHT ERROR:", e)
         return "Insight unavailable"
         
 def predict_batch(clients: list) -> list:
