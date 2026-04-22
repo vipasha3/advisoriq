@@ -224,6 +224,31 @@ st.set_page_config(
 if DB_OK:
     db.init_db()
 
+# ── Theme injection ─────────────────────────────────────────────────────────
+def inject_theme():
+    dark = st.session_state.get("dark_mode", True)
+    if dark:
+        root = """:root{
+  --bg:#0d1117;--s1:#161b22;--s2:#1c2128;--s3:#21262d;
+  --bd:#30363d;--bd2:#444c56;
+  --tx:#e6edf3;--t2:#8b949e;--t3:#6e7681;
+  --gr:#3fb950;--grbg:rgba(63,185,80,.1);--grbd:rgba(63,185,80,.3);
+  --am:#d29922;--ambg:rgba(210,153,34,.1);--ambd:rgba(210,153,34,.3);
+  --rd:#f85149;--rdbg:rgba(248,81,73,.1);--rdbd:rgba(248,81,73,.3);
+  --bl:#58a6ff;--blbg:rgba(88,166,255,.1);--blbd:rgba(88,166,255,.3);
+  --pu:#a371f7;--pubg:rgba(163,113,247,.1);--pubd:rgba(163,113,247,.3)}"""
+    else:
+        root = """:root{
+  --bg:#f5f6f8;--s1:#ffffff;--s2:#f0f2f5;--s3:#e8eaed;
+  --bd:#e2e5ea;--bd2:#cdd1d8;
+  --tx:#111318;--t2:#6b7280;--t3:#9ca3af;
+  --gr:#16a34a;--grbg:rgba(22,163,74,.08);--grbd:rgba(22,163,74,.22);
+  --am:#d97706;--ambg:rgba(217,119,6,.08);--ambd:rgba(217,119,6,.22);
+  --rd:#dc2626;--rdbg:rgba(220,38,38,.07);--rdbd:rgba(220,38,38,.20);
+  --bl:#2563eb;--blbg:rgba(37,99,235,.07);--blbd:rgba(37,99,235,.20);
+  --pu:#7c3aed;--pubg:rgba(124,58,237,.07);--pubd:rgba(124,58,237,.22)}"""
+    st.markdown(f"<style>{root}</style>", unsafe_allow_html=True)
+
 # ── CSS ───────────────────────────────────────────────────────────────────────
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
