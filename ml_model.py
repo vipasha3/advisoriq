@@ -89,4 +89,4 @@ def predict_batch(clients: list) -> list:
         logger.warning(f"Batch ML failed, using rules: {e}")
 
         # 👇 fallback
-        return [_rule_predict(c) | c for c in clients]
+        return clients
