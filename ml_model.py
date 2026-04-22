@@ -56,16 +56,24 @@ def get_top_feature(model, sample):
         age = sample[2]
         inactive = sample[3]
 
-        if portfolio > 5:
-            return f"Client has ₹{int(portfolio*1e6):,} portfolio which is boosting priority score"
-        elif sip > 2:
-            return f"Client invests ₹{int(sip*1e4):,}/month via SIP which improves health score"
-        elif inactive > 6:
-            return f"Client inactive for {int(inactive)} months → churn risk increasing"
-        elif age > 50:
-            return "Client age factor influencing conservative investment behavior"
-        else:
-            return "Balanced profile with moderate growth potential"
+        # 👇 normalize importance manually
+        scores = {
+            "portfolio": portfolio * 2,   # weight high
+            "sip": sip * 1.5,
+            "inactive": inactive * 2,
+            "age": age * 0.5
+        }
+
+        top = max(scores, key=scores.get)
+
+        if top == "portfolio":
+            return f"High portfolio ₹{int(portfolio*1e6):,} is driving strong priority"
+        elif top == "sip":
+            return f"Monthly SIP ₹{int(sip*1e4):,} is improving client health"
+        elif top == "inactive":
+            return f"{int(inactive)} months inactivity increasing churn risk"
+        elif top == "age":
+            return f"Age ({int(age)}) influencing investment behavior"
 
     except Exception as e:
         return f"Insight error: {e}"
