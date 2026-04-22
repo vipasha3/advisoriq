@@ -85,6 +85,7 @@ def predict_batch(clients: list) -> list:
         return results
 
     except Exception as e:
+        print("ML ERROR:", e)
         logger.warning(f"Batch ML failed, using rules: {e}")
 
         # 👇 fallback
