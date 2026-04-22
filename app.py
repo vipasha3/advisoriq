@@ -16,19 +16,6 @@ html, body, [class*="css"]  {
 </style>
 """, unsafe_allow_html=True)
 
-if theme == "Light":
-    st.markdown("""
-    <style>
-    body { background-color: white; color: black; }
-    </style>
-    """, unsafe_allow_html=True)
-
-else:
-    st.markdown("""
-    <style>
-    body { background-color: #0E1117; color: white; }
-    </style>
-    """, unsafe_allow_html=True)
 
 
 # ── Module imports (graceful fallback) ───────────────────────────────────────
