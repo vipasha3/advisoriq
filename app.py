@@ -959,13 +959,14 @@ def show_dashboard(clients):
             with bc:
                 if st.button("\u25b2" if is_exp else "\u25bc", key=f"er_{i}"):
                     st.session_state.exp_row = None if is_exp else i; st.rerun()
+                    
             if is_exp:
                 insight = c.get("feature_importance", "No insight available")
-            
+                tag = "🧠 AI Insight" if c.get("ml_powered") else ""
                 act = f"{c.get('name','')} → {insight}"
             
                 st.markdown(f"""<div class="xin" style="margin-bottom:8px">
-                  <div class="xlbl">Strategic Recommendation</div>
+                  <div class="xlbl">{tag} Strategic Recommendation</div>
                   <div class="xtxt">{act}</div>
                   <div style="margin-top:8px;font-size:11px;color:#6e7681;font-family:'JetBrains Mono',monospace">
                     📅 Since {c.get("tenure","—")} · 📋 Nominee: {c.get("nominee","—")} · 💰 SIP: {_fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "None"}
@@ -1086,8 +1087,15 @@ def show_dashboard(clients):
                     st.session_state.ml_exp = None if is_me else i; st.rerun()
             if is_me:
                 feat = c.get("feature_importance", "No insight available")
-
+            
+                # 👇 Python logic outside
+                tag = ""
+                if c.get("ml_powered"):
+                    tag = '<div style="font-size:10px;color:#3fb950;font-family:JetBrains Mono,monospace">🧠 AI Insight</div>'
+            
+                # 👇 HTML inside
                 st.markdown(f"""<div class="mlxpand">
+                  {tag}
                   <div class="mlfl">⊕ Model feature importance</div>
                   <div class="mlft">↳ {feat}</div>
                 </div>""", unsafe_allow_html=True)
