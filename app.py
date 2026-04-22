@@ -7,6 +7,7 @@ import datetime, random, json
 import plotly.graph_objects as go
 import urllib.parse
 from io import BytesIO
+from ml_model import predict_batch
 
 # ── Module imports (graceful fallback) ───────────────────────────────────────
 try:
@@ -663,7 +664,7 @@ def show_mapping(df):
     with c1:
         if st.button("Run engine \u2192", use_container_width=True):
             with st.spinner("Processing and scoring all clients..."):
-                from ml_model import predict_batch   # 👈 ADD (top ma pan muki sako)
+                 
 
                 if SCORING_OK:
                     clients = process_dataframe(df, user_mapping)
