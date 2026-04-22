@@ -130,7 +130,7 @@ SCHEMA_SQLITE = SCHEMA_SQL.replace("SERIAL PRIMARY KEY", "INTEGER PRIMARY KEY AU
 
 
 def init_db():
-    """Initialize database schema."""
+    """Initialize database schema with safe migrations."""
     schema = SCHEMA_SQL if USE_POSTGRES else SCHEMA_SQLITE
     with get_conn() as conn:
         c = conn.cursor()
@@ -141,6 +141,24 @@ def init_db():
                     c.execute(stmt)
                 except Exception as e:
                     logger.debug(f"Schema statement skipped: {e}")
+
+        # ── Safe migrations: add missing columns to existing tables ──
+        migrations = [
+            "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'",
+            "ALTER TABLE users ADD COLUMN sheets_url TEXT",
+            "ALTER TABLE users ADD COLUMN sheets_last_synced TEXT",
+            "ALTER TABLE users ADD COLUMN last_login TEXT",
+            "ALTER TABLE clients ADD COLUMN conv INTEGER DEFAULT 50",
+            "ALTER TABLE clients ADD COLUMN source TEXT DEFAULT 'upload'",
+            "ALTER TABLE clients ADD COLUMN updated_at TEXT",
+        ]
+        for m in migrations:
+            try:
+                c.execute(m)
+                logger.info(f"Migration applied: {m}")
+            except Exception:
+                pass  # Column already exists — skip silently
+
     logger.info(f"Database initialized ({'PostgreSQL' if USE_POSTGRES else 'SQLite'})")
 
 
