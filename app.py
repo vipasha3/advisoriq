@@ -26,25 +26,51 @@ def apply_theme():
     if st.session_state.theme == "dark":
         bg = "#0e1117"
         text = "#ffffff"
+        card = "#1c1f26"
     else:
-        bg = "#ffffff"
+        bg = "#f5f7fb"
         text = "#000000"
+        card = "#ffffff"
 
     st.markdown(f"""
-        <style>
-        html, body, [class*="css"]  {{
-            font-family: 'Inter', sans-serif;
-        }}
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
 
-        .stApp {{
-            background-color: {bg};
-            color: {text};
-        }}
-        </style>
+    html, body, [class*="css"] {{
+        font-family: 'Inter', sans-serif;
+    }}
+
+    .stApp {{
+        background-color: {bg};
+        color: {text};
+    }}
+
+    /* Sidebar */
+    section[data-testid="stSidebar"] {{
+        background-color: {card};
+    }}
+
+    /* Buttons */
+    .stButton>button {{
+        background-color: {card};
+        color: {text};
+        border-radius: 10px;
+        border: 1px solid #ccc;
+    }}
+
+    /* Dataframe */
+    .stDataFrame {{
+        background-color: {card};
+    }}
+
+    /* Input fields */
+    input, textarea {{
+        background-color: {card} !important;
+        color: {text} !important;
+    }}
+
+    </style>
     """, unsafe_allow_html=True)
-
-apply_theme()
-
 
 
 # ── Module imports (graceful fallback) ───────────────────────────────────────
