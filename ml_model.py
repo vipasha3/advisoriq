@@ -49,17 +49,31 @@ def load_model():
     with open(PRIORITY_MODEL_PATH, "rb") as f:
         return pickle.load(f)
 
-def get_top_feature(model, vals):
+def get_top_feature(model, sample):
     try:
-        features = ["Portfolio", "SIP", "Age", "Inactivity"]
+        import numpy as np
 
-        importances = model.named_steps["clf"].feature_importances_
-        idx = int(importances.argmax())
+        # 👇 get actual classifier from pipeline
+        clf = model.named_steps["clf"]
 
-        return f"{features[idx]} is the strongest driver for this client."
-    except:
-        return "Portfolio is the primary driver."
+        importances = clf.feature_importances_
+        idx = int(np.argmax(importances))
 
+        feature_names = [
+            "Portfolio size",
+            "SIP amount",
+            "Age factor",
+            "Inactivity level"
+        ]
+
+        if idx < len(feature_names):
+            return f"{feature_names[idx]} is the primary driver"
+
+        return "Multiple factors influencing score"
+
+    except Exception as e:
+        return f"Model insight error: {e}"
+        
 def predict_batch(clients: list) -> list:
     if not clients:
         return []
@@ -67,7 +81,8 @@ def predict_batch(clients: list) -> list:
     results = []  # 👈 IMPORTANT (try ni bahar)
 
     try:
-        pm, cm = load_models()
+        pm = load_model()
+        cm = load_model()  # temporary (same model for churn)
         X = np.array([extract_features(c) for c in clients])
 
         priority_probs = pm.predict_proba(X)[:, 1]
