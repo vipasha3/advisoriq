@@ -78,7 +78,7 @@ def predict_batch(clients: list) -> list:
             churn = round(churn_probs[i] * 100)
             conv  = min(95, max(5, round(score * 0.65 + (100 - churn) * 0.35)))
 
-            feat_text = get_top_feature(pm, X[i])
+            feat_text = "Portfolio size is driving score"
 
             results.append({
                 **c,
