@@ -6,7 +6,15 @@ import urllib.parse
 from io import BytesIO
 from ml_model import predict_batch
 
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
+html, body, [class*="css"]  {
+    font-family: 'Inter', sans-serif;
+}
+</style>
+""", unsafe_allow_html=True)
 
 
 
