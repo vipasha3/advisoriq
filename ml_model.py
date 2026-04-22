@@ -274,12 +274,16 @@ def predict_batch(clients: list) -> list:
             score = round(priority_probs[i] * 100)
             churn = round(churn_probs[i] * 100)
             conv  = min(95, max(5, round(score * 0.65 + (100 - churn) * 0.35)))
+
+            feat_text = get_top_feature(pm, X[i])
+         
             results.append({
                 **c,
                 "score": score,
                 "churn": churn,
                 "conv": conv,
                 "priority": "High" if score >= 70 else ("Medium" if score >= 45 else "Low"),
+                "feature_importance": feat_text,
                 "ml_powered": True,
             })
         return results
