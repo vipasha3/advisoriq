@@ -960,13 +960,16 @@ def show_dashboard(clients):
                 if st.button("\u25b2" if is_exp else "\u25bc", key=f"er_{i}"):
                     st.session_state.exp_row = None if is_exp else i; st.rerun()
             if is_exp:
-                if pr=="High": act=f"{c.get('name','')} is primed \u2014 schedule a portfolio review and introduce a MF top-up or capital gain bond based on their {_fi(c.get('portfolio',0))} profile."
-                elif pr=="Medium": act=f"{c.get('name','')} sits near the high-priority threshold. A personalised offer around their {_fi(c.get('portfolio',0))} range could shift classification with strong confidence."
-                else: act=f"{c.get('name','')} needs re-engagement. Start with a no-pressure portfolio health-check call \u2014 avoid sales pitch on first contact."
+                insight = c.get("feature_importance", "No insight available")
+            
+                act = f"{c.get('name','')} → {insight}"
+            
                 st.markdown(f"""<div class="xin" style="margin-bottom:8px">
                   <div class="xlbl">Strategic Recommendation</div>
                   <div class="xtxt">{act}</div>
-                  <div style="margin-top:8px;font-size:11px;color:#6e7681;font-family:\'JetBrains Mono\',monospace">\U0001f4c5 Since {c.get("tenure","\u2014")} \u00b7 \U0001f4cb Nominee: {c.get("nominee","\u2014")} \u00b7 \U0001f4b0 SIP: {_fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "None"}</div>
+                  <div style="margin-top:8px;font-size:11px;color:#6e7681;font-family:'JetBrains Mono',monospace">
+                    📅 Since {c.get("tenure","—")} · 📋 Nominee: {c.get("nominee","—")} · 💰 SIP: {_fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "None"}
+                  </div>
                 </div>""", unsafe_allow_html=True)
 
     # TAB 2
@@ -1082,18 +1085,14 @@ def show_dashboard(clients):
                 if st.button("\u25b2" if is_me else "\u25bc", key=f"me_{i}"):
                     st.session_state.ml_exp = None if is_me else i; st.rerun()
             if is_me:
-                feat = ""
-                if ML_OK:
-                    try:
-                        pm, _ = load_models()
-                        from ml_model import extract_features
-                        feat = get_top_feature(pm, extract_features(c))
-                    except: feat = "Composite score from portfolio, recency, SIP, and tenure signals"
-                else: feat = "Composite score from portfolio, recency, SIP, and tenure signals"
+                feat = c.get("feature_importance", "No insight available")
+
                 st.markdown(f"""<div class="mlxpand">
-                  <div class="mlfl">\u2295 Model feature importance</div>
-                  <div class="mlft">\u21b3 {feat}</div>
+                  <div class="mlfl">⊕ Model feature importance</div>
+                  <div class="mlft">↳ {feat}</div>
                 </div>""", unsafe_allow_html=True)
+                
+
         if len(clients)>15:
             st.markdown(f"<div style='text-align:center;padding:1rem;font-size:12px;color:#58a6ff;font-family:JetBrains Mono,monospace'>View all {len(clients)} predictions \u2192</div>", unsafe_allow_html=True)
 
