@@ -71,4 +71,4 @@ def predict_batch(clients):
             "ml_powered": True
         })
 
-    return resultsv
+    return results
