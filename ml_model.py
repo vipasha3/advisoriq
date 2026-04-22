@@ -51,14 +51,14 @@ def load_model():
 
 def get_top_feature(model, sample):
     try:
-        portfolio = sample[0]
-        sip = sample[1]
-        age = sample[2]
-        inactive = sample[3]
+        # 👇 safe conversion
+        portfolio = float(sample[0])
+        sip = float(sample[1])
+        age = float(sample[2])
+        inactive = float(sample[3])
 
-        # 👇 normalize importance manually
         scores = {
-            "portfolio": portfolio * 2,   # weight high
+            "portfolio": portfolio * 2,
             "sip": sip * 1.5,
             "inactive": inactive * 2,
             "age": age * 0.5
@@ -75,8 +75,11 @@ def get_top_feature(model, sample):
         elif top == "age":
             return f"Age ({int(age)}) influencing investment behavior"
 
+        return "Balanced profile"
+
     except Exception as e:
-        return f"Insight error: {e}"
+        print("INSIGHT ERROR:", e)   # 👈 debug
+        return "Insight unavailable"
         
 def predict_batch(clients: list) -> list:
     if not clients:
