@@ -50,7 +50,15 @@ def load_model():
         return pickle.load(f)
 
 def get_top_feature(model, vals):
-    return "Portfolio strength is driving this client’s priority."
+    try:
+        features = ["Portfolio", "SIP", "Age", "Inactivity"]
+
+        importances = model.named_steps["clf"].feature_importances_
+        idx = int(importances.argmax())
+
+        return f"{features[idx]} is the strongest driver for this client."
+    except:
+        return "Portfolio is the primary driver."
 
 def predict_batch(clients: list) -> list:
     if not clients:
