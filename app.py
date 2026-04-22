@@ -663,11 +663,16 @@ def show_mapping(df):
     with c1:
         if st.button("Run engine \u2192", use_container_width=True):
             with st.spinner("Processing and scoring all clients..."):
+                from ml_model import predict_batch   # 👈 ADD (top ma pan muki sako)
+
                 if SCORING_OK:
                     clients = process_dataframe(df, user_mapping)
+                    clients = predict_batch(clients)   # 👈 MOST IMPORTANT LINE
                     merged = 0
                 else:
-                    clients = df.to_dict("records"); merged = 0
+                    clients = df.to_dict("records")
+                    clients = predict_batch(clients)   # 👈 aa pan add karo safety mate
+                    merged = 0
             st.session_state.clients = clients
             st.session_state.merged_count = merged
             if DB_OK:
@@ -1180,6 +1185,9 @@ def main():
         if st.session_state.get("use_demo"):
             with st.spinner("Loading demo data..."):
                 clients = prep_demo()
+                from ml_model import predict_batch
+
+                clients = predict_batch(clients)
             st.session_state.clients = clients
             if DB_OK: db.save_clients(st.session_state.user_id, clients)
             st.session_state.use_demo = False
