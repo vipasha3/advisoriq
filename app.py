@@ -1186,7 +1186,6 @@ def main():
         if st.session_state.get("use_demo"):
             with st.spinner("Loading demo data..."):
                 clients = prep_demo()
-                from ml_model import predict_batch
 
                 clients = predict_batch(clients)
             st.session_state.clients = clients
