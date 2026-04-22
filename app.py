@@ -1001,7 +1001,7 @@ def show_dashboard(clients):
              "Hi! As part of our annual client care review, I noticed your nominee details may need updating. This protects your family \u2014 can we sort this quickly?",""),
         ]
         for badge,bcls,channel,title,reason,impact,wa_msg,ph in actions_data:
-            wl = get_whatsapp_link(ph, wa_msg) if WA_OK and ph else f"https://wa.me/?text={wa_msg.replace(' ''%20')}"
+            wl = get_whatsapp_link(ph, wa_msg) if WA_OK and ph else f"https://wa.me/?text={wa_msg.replace(' ','%20')}"
             st.markdown(f"""<div class="acard">
               <div class="atop"><span class="abadge {bcls}">{badge}</span>
               <div style="flex:1"><div class="achan">\U0001f4f2 {channel}</div>
