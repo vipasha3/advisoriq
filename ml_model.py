@@ -257,9 +257,6 @@ def predict_client(client: dict) -> dict:
 
 
 def predict_batch(clients: list) -> list:
-    """
-    Score all clients at once (much faster than one-by-one for large lists).
-    """
     if not clients:
         return []
     try:
@@ -275,8 +272,9 @@ def predict_batch(clients: list) -> list:
             churn = round(churn_probs[i] * 100)
             conv  = min(95, max(5, round(score * 0.65 + (100 - churn) * 0.35)))
 
+            # 👇 IMPORTANT FIX
             feat_text = get_top_feature(pm, X[i])
-         
+
             results.append({
                 **c,
                 "score": score,
@@ -286,7 +284,9 @@ def predict_batch(clients: list) -> list:
                 "feature_importance": feat_text,
                 "ml_powered": True,
             })
+
         return results
+
     except Exception as e:
         logger.warning(f"Batch ML failed, using rules: {e}")
         return [_rule_predict(c) | c for c in clients]
