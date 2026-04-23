@@ -1078,8 +1078,13 @@ def show_dashboard(clients):
                   </td>
                 
                   <td><span class="chip {cc2}">{pr}</span></td>
+                  <!-- ✅ NEW ACTION -->
+                  <td style="font-size:12px">{action}</td>
+                
+                  <!-- ✅ NEW INSIGHT -->
+                  <td style="font-size:12px;color:var(--t2)">{explanation}</td>
                   <td style="font-size:11px;font-family:'DM Mono',monospace;color:var(--t2)">
-                    {" \u00b7 ".join(c.get("flags",[])[:2]) or "\u2014"}
+                  {" · ".join(c.get("flags",[])[:2]) or "—"}
                   </td></tr>"""
             st.markdown(f"""<div class="kdet">
               <div class="kdet-h"><span class="kdet-t">{dlbl} <span style="font-size:12px;color:var(--t2);font-weight:400">({len(dlst)} clients)</span></span></div>
