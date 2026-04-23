@@ -33,6 +33,14 @@ except Exception as e:
 
 import datetime as _dt
 
+def convert_to_business_language(score):
+    if score > 0.75:
+        return "⚠️ High Risk - Needs Attention"
+    elif score > 0.4:
+        return "🟡 Moderate Risk"
+    else:
+        return "🟢 Safe Customer"
+
 def fmt_inr(v):
     try: n=float(str(v).replace(",","").replace("\u20b9","") or 0)
     except: n=0
@@ -980,17 +988,31 @@ def show_dashboard(clients):
             dlbl, dlst = dmap[active]
             rd = ""
             for i,c in enumerate(dlst[:10]):
-                sc=c.get("score",0); pr=c.get("priority","Low")
-                fill="#3fb950" if sc>=70 else ("#d29922" if sc>=45 else "#f85149")
-                cc2="chi" if pr=="High" else ("chm" if pr=="Medium" else "chl")
+                sc = c.get("score", 0)
+                pr = c.get("priority", "Low")
+                
+                # 👉 convert to business language
+                label = convert_to_business_language(sc)
+                
+                fill = "#3fb950" if sc >= 70 else ("#d29922" if sc >= 45 else "#f85149")
+                cc2 = "chi" if pr == "High" else ("chm" if pr == "Medium" else "chl")
+                
                 rd += f"""<tr><td class="prank">#{i+1}</td>
                   <td><div class="pname">{c.get("name","\u2014")}</div>
                   <div class="psub">{c.get("goal","\u2014")} \u00b7 Age {c.get("age","\u2014")}</div></td>
                   <td style="font-family:'DM Mono',monospace;font-size:12px">{_fi(c.get("portfolio",0))}</td>
-                  <td><div class="sbar"><span class="snum" style="color:{fill}">{sc}</span>
-                  <span class="strack"><span class="sfill" style="width:{sc}%;background:{fill}"></span></span></div></td>
+                
+                  <!-- ✅ FIXED CELL -->
+                  <td>
+                    <div class="sbar">
+                      <span class="snum" style="color:{fill}">{label}</span>
+                    </div>
+                  </td>
+                
                   <td><span class="chip {cc2}">{pr}</span></td>
-                  <td style="font-size:11px;font-family:'DM Mono',monospace;color:var(--t2)">{" \u00b7 ".join(c.get("flags",[])[:2]) or "\u2014"}</td></tr>"""
+                  <td style="font-size:11px;font-family:'DM Mono',monospace;color:var(--t2)">
+                    {" \u00b7 ".join(c.get("flags",[])[:2]) or "\u2014"}
+                  </td></tr>"""
             st.markdown(f"""<div class="kdet">
               <div class="kdet-h"><span class="kdet-t">{dlbl} <span style="font-size:12px;color:var(--t2);font-weight:400">({len(dlst)} clients)</span></span></div>
               <div style="overflow-x:auto"><table class="ptable" style="margin:0">
