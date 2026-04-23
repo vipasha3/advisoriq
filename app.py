@@ -213,11 +213,25 @@ def process_dataframe(df, mapping):
                     else: c[key]=str(val).strip()
         try:
             from ml_model import predict_batch
-            result=predict_batch([c]); c.update(result[0])
-        except:
-            c["score"]=_score_c(c); c["churn"]=_churn_c(c)
-            c["conv"]=min(95,max(5,round(c["score"]*0.65+(100-c["churn"])*0.35)))
-            c["priority"]="High" if c["score"]>=70 else ("Medium" if c["score"]>=45 else "Low")
+            result = predict_batch([c])
+            c.update(result[0])
+        
+            # ✅ Ensure priority always set
+            c["priority"] = "High" if c.get("score",0) >= 70 else (
+                "Medium" if c.get("score",0) >= 45 else "Low"
+            )
+        
+        except Exception as e:
+            print("ML failed:", e)
+            # ✅ Fallback (clean + consistent)
+            c["score"] = _score_c(c)
+            c["churn"] = _churn_c(c)
+        
+            c["conv"] = min(95, max(5, round(c["score"]*0.65 + (100-c["churn"])*0.35)))
+        
+            c["priority"] = "High" if c["score"] >= 70 else (
+                "Medium" if c["score"] >= 45 else "Low"
+            )
         c["flags"]=_flags_c(c)
         clients.append(c)
     seen_p={}; seen_n={}; out=[]; merged=0
@@ -1019,7 +1033,7 @@ def show_dashboard(clients):
     k1,k2,k3,k4,k5 = st.columns(5)
     kdata  = [(k1,"kaum","Total AUM",clients),(k2,"khigh","Ready to act",high),
               (k3,"krisk","Leaving risk",at_risk),(k4,"ksip","Revenue gap",no_sip),(k5,"knom","Paperwork due",no_nom)]
-    active = st.session_state.get("kpi_open", None)
+    active = st.session_state.get("kpi_open", "khigh")
     for col,key,label,lst in kdata:
         with col:
             lbl = "\u25b2 Close" if active==key else f"\u25bc {len(lst)} clients"
@@ -1045,6 +1059,8 @@ def show_dashboard(clients):
                 label = convert_to_business_language(sc)
 
                 explanation = generate_client_explanation(c)
+
+                action = get_next_action(c)
 
                 fill = "#3fb950" if sc >= 70 else ("#d29922" if sc >= 45 else "#f85149")
                 cc2 = "chi" if pr == "High" else ("chm" if pr == "Medium" else "chl")
@@ -1186,7 +1202,7 @@ def show_dashboard(clients):
         sip2   = ", ".join(c.get("name","") for c in no_sip[:3])  or "\u2014"
         nom2   = ", ".join(c.get("name","") for c in no_nom[:2])  or "\u2014"
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="mhd"><div class="mic mam">\u26a1</div><div><div class="mtitle">Smart Next Best Action</div><div class="msub">Decision engine \u00b7 Impact scoring \u00b7 Automated outreach templates</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="mhd"><div class="mic mam">\u26a1</div><div><div class="mtitle">Smart Next Best Action</div><div class="msub">What to do \u00b7 Expected result \u00b7 Automated outreach templates</div></div></div>', unsafe_allow_html=True)
         tn = top_c.get("name","Top client")
         actions_data = [
             ("HIGH","bhi","WhatsApp + Follow-up call",
@@ -1197,7 +1213,7 @@ def show_dashboard(clients):
              top_c.get("phone","")),
             ("HIGH","bhi","WhatsApp + Email Sequence",
              f"{len(at_risk)} clients \u2014 Urgent churn prevention",
-             f"ML model flags {risk2} as high-risk for advisor switch within 60 days. Inactivity beyond 6 months triples withdrawal probability. A portfolio health-check call \u2014 not a sales call \u2014 is the highest-impact intervention at this stage.",
+             f"System identified {risk2} as high-risk for advisor switch within 60 days. Inactivity beyond 6 months triples withdrawal probability. A portfolio health-check call \u2014 not a sales call \u2014 is the highest-impact intervention at this stage.",
              f"~{_fi(risk_aum*0.12)} recoverable if re-engaged this month",
              "Hi! I wanted to personally check in \u2014 it has been a while and I want to make sure your portfolio is well positioned. Can we connect briefly?",""),
             ("GROWTH","bgr","SIP upsell sequence",
