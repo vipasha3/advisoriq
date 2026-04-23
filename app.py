@@ -4,76 +4,20 @@ import datetime, random, json
 import plotly.graph_objects as go
 import urllib.parse
 from io import BytesIO
-from ml_model import predict_batch
 
-st.set_page_config(page_title="My App", layout="wide")
+# ── Page config (MUST be first Streamlit call) ────────────────────────────────
+st.set_page_config(
+    page_title="AdvisorIQ",
+    page_icon="⚡",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# -----------------------------
-# THEME TOGGLE
-# -----------------------------
+# ── Theme init ────────────────────────────────────────────────────────────────
 if "theme" not in st.session_state:
-    st.session_state.theme = "light"
+    st.session_state.theme = "dark"
 
-def toggle_theme():
-    if st.session_state.theme == "light":
-        st.session_state.theme = "dark"
-    else:
-        st.session_state.theme = "light"
-
-st.sidebar.button("🌗 Toggle Theme", on_click=toggle_theme)
-
-def apply_theme():
-    if st.session_state.theme == "dark":
-        bg = "#0e1117"
-        text = "#ffffff"
-        card = "#1c1f26"
-    else:
-        bg = "#f5f7fb"
-        text = "#000000"
-        card = "#ffffff"
-
-    st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&displa');
-
-    html, body, [class*="css"] {{
-        font-family: 'DM Sans', sans-serif;
-    }}
-
-    .stApp {{
-        background-color: {bg};
-        color: {text};
-    }}
-
-    /* Sidebar */
-    section[data-testid="stSidebar"] {{
-        background-color: {card};
-    }}
-
-    /* Buttons */
-    .stButton>button {{
-        background-color: {card};
-        color: {text};
-        border-radius: 10px;
-        border: 1px solid #ccc;
-    }}
-
-    /* Dataframe */
-    .stDataFrame {{
-        background-color: {card};
-    }}
-
-    /* Input fields */
-    input, textarea {{
-        background-color: {card} !important;
-        color: {text} !important;
-    }}
-
-    </style>
-    """, unsafe_allow_html=True)
-
-
-# ── Module imports (graceful fallback) ───────────────────────────────────────
+# ── Module imports (graceful fallback) ────────────────────────────────────────
 try:
     import database as db
     DB_OK = True
@@ -87,7 +31,6 @@ try:
 except Exception as e:
     SCORING_OK = False
 
-# ── Self-contained fallbacks (always work even if scoring.py fails) ───────────
 import datetime as _dt
 
 def fmt_inr(v):
@@ -210,14 +153,10 @@ def process_dataframe(df, mapping):
                     if key in ("portfolio","sip"): c[key]=_clean_num(val)
                     elif key=="phone": c[key]=_clean_phone(val)
                     else: c[key]=str(val).strip()
-        if ML_OK:
-            try:
-                result=predict_batch([c]); c.update(result[0])
-            except:
-                c["score"]=_score_c(c); c["churn"]=_churn_c(c)
-                c["conv"]=min(95,max(5,round(c["score"]*0.65+(100-c["churn"])*0.35)))
-                c["priority"]="High" if c["score"]>=70 else ("Medium" if c["score"]>=45 else "Low")
-        else:
+        try:
+            from ml_model import predict_batch
+            result=predict_batch([c]); c.update(result[0])
+        except:
             c["score"]=_score_c(c); c["churn"]=_churn_c(c)
             c["conv"]=min(95,max(5,round(c["score"]*0.65+(100-c["churn"])*0.35)))
             c["priority"]="High" if c["score"]>=70 else ("Medium" if c["score"]>=45 else "Low")
@@ -269,162 +208,240 @@ try:
 except Exception as e:
     ML_OK = False
 
-# ── Page config ───────────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="AdvisorIQ",
-    page_icon="⚡",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
 # ── Init DB ───────────────────────────────────────────────────────────────────
 if DB_OK:
     db.init_db()
 
+# ── Theme CSS builder ─────────────────────────────────────────────────────────
+def get_theme_css():
+    theme = st.session_state.get("theme", "dark")
 
+    if theme == "light":
+        vars_css = """
+  --bg:#f4f6fb;
+  --s1:#ffffff;
+  --s2:#f1f4f9;
+  --s3:#e8edf5;
+  --bd:#dde3ed;
+  --bd2:#c8d0de;
+  --tx:#0f172a;
+  --t2:#4a5568;
+  --t3:#94a3b8;
+  --gr:#16a34a;
+  --grbg:rgba(22,163,74,.09);
+  --grbd:rgba(22,163,74,.28);
+  --am:#d97706;
+  --ambg:rgba(217,119,6,.09);
+  --ambd:rgba(217,119,6,.28);
+  --rd:#dc2626;
+  --rdbg:rgba(220,38,38,.09);
+  --rdbd:rgba(220,38,38,.28);
+  --bl:#2563eb;
+  --blbg:rgba(37,99,235,.09);
+  --blbd:rgba(37,99,235,.28);
+  --pu:#7c3aed;
+  --pubg:rgba(124,58,237,.09);
+  --pubd:rgba(124,58,237,.28);
+"""
+        plotly_bg = "#f4f6fb"
+        plotly_paper = "#ffffff"
+        plotly_grid = "#e8edf5"
+        plotly_font = "#4a5568"
+        plotly_line = "#dde3ed"
+    else:
+        vars_css = """
+  --bg:#0d1117;
+  --s1:#161b22;
+  --s2:#1c2128;
+  --s3:#21262d;
+  --bd:#30363d;
+  --bd2:#444c56;
+  --tx:#e6edf3;
+  --t2:#8b949e;
+  --t3:#6e7681;
+  --gr:#3fb950;
+  --grbg:rgba(63,185,80,.1);
+  --grbd:rgba(63,185,80,.3);
+  --am:#d29922;
+  --ambg:rgba(210,153,34,.1);
+  --ambd:rgba(210,153,34,.3);
+  --rd:#f85149;
+  --rdbg:rgba(248,81,73,.1);
+  --rdbd:rgba(248,81,73,.3);
+  --bl:#58a6ff;
+  --blbg:rgba(88,166,255,.1);
+  --blbd:rgba(88,166,255,.3);
+  --pu:#a371f7;
+  --pubg:rgba(163,113,247,.1);
+  --pubd:rgba(163,113,247,.3);
+"""
+        plotly_bg = "#0d1117"
+        plotly_paper = "#161b22"
+        plotly_grid = "#21262d"
+        plotly_font = "#8b949e"
+        plotly_line = "#30363d"
 
-# ── CSS ───────────────────────────────────────────────────────────────────────
-st.markdown("""<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-:root{
-  --bg:#0d1117;--s1:#161b22;--s2:#1c2128;--s3:#21262d;
-  --bd:#30363d;--bd2:#444c56;
-  --tx:#e6edf3;--t2:#8b949e;--t3:#6e7681;
-  --gr:#3fb950;--grbg:rgba(63,185,80,.1);--grbd:rgba(63,185,80,.3);
-  --am:#d29922;--ambg:rgba(210,153,34,.1);--ambd:rgba(210,153,34,.3);
-  --rd:#f85149;--rdbg:rgba(248,81,73,.1);--rdbd:rgba(248,81,73,.3);
-  --bl:#58a6ff;--blbg:rgba(88,166,255,.1);--blbd:rgba(88,166,255,.3);
-  --pu:#a371f7;--pubg:rgba(163,113,247,.1);--pubd:rgba(163,113,247,.3)}
-*{box-sizing:border-box}
-html,body,[data-testid=stAppViewContainer]{background:var(--bg)!important;color:var(--tx)!important;font-family:Inter,sans-serif!important}
-[data-testid=stHeader],[data-testid=stDecoration],footer{display:none!important}
-[data-testid=stSidebar]{background:var(--s1)!important;border-right:1px solid var(--bd)!important}
-.block-container{padding:0!important;max-width:100%!important}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:200}
-.nav-logo{display:flex;align-items:center;gap:10px}
-.nav-icon{width:30px;height:30px;background:var(--gr);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#000}
-.nav-brand{font-size:15px;font-weight:600;color:var(--tx)}.nav-brand em{color:var(--gr);font-style:normal}
-.nav-right{display:flex;align-items:center;gap:10px}
-.nav-user{font-size:12px;color:var(--t2);font-family:'JetBrains Mono',monospace}
-.nav-role{font-size:11px;padding:2px 8px;border-radius:12px;background:var(--grbg);color:var(--gr);border:1px solid var(--grbd);font-weight:600}
-.bc{padding:8px 1.5rem;background:var(--s1);border-bottom:1px solid var(--bd);font-size:12px;color:var(--t3);font-family:'JetBrains Mono',monospace}
-.bc em{color:var(--bl);font-style:normal}
-.wrap{padding:1.5rem;max-width:1440px;margin:0 auto}
-.greet{display:flex;align-items:center;justify-content:space-between;background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1.5rem}
-.gt{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gr);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-.gn{font-size:1.4rem;font-weight:600;letter-spacing:-.4px;margin-bottom:4px}
-.gsub{font-size:13px;color:var(--t2)}
-.gstats{display:flex;gap:2rem;text-align:right}
-.gst{font-family:'JetBrains Mono',monospace}
-.gnum{font-size:1.4rem;font-weight:700;display:block}
-.glbl{font-size:11px;color:var(--t2);margin-top:2px;display:block}
-.kgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:.5rem}
-.kc{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.1rem 1.3rem;position:relative;overflow:hidden;transition:border-color .15s,transform .15s}
-.kc:hover{border-color:var(--bd2);transform:translateY(-2px)}
-.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.kc.gr::before{background:var(--gr)}.kc.bl::before{background:var(--bl)}.kc.rd::before{background:var(--rd)}.kc.am::before{background:var(--am)}.kc.pu::before{background:var(--pu)}
-.kl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;margin-bottom:10px}
-.kc.gr .kl{color:var(--gr)}.kc.bl .kl{color:var(--bl)}.kc.rd .kl{color:var(--rd)}.kc.am .kl{color:var(--am)}.kc.pu .kl{color:var(--pu)}
-.knum{font-size:2rem;font-weight:700;letter-spacing:-.04em;line-height:1;margin-bottom:5px}
-.kdesc{font-size:12px;color:var(--t2);line-height:1.4;margin-bottom:8px}
-.ksig{font-size:11px;font-family:'JetBrains Mono',monospace;padding-top:8px;border-top:1px solid var(--bd)}
-.kc.gr .ksig{color:var(--gr)}.kc.bl .ksig{color:var(--bl)}.kc.rd .ksig{color:var(--rd)}.kc.am .ksig{color:var(--am)}.kc.pu .ksig{color:var(--pu)}
-.khint{font-size:10px;color:var(--t3);margin-top:3px;font-family:'JetBrains Mono',monospace}
-.kdet{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem}
-.kdet-h{display:flex;align-items:center;margin-bottom:.875rem;padding-bottom:.75rem;border-bottom:1px solid var(--bd)}
-.kdet-t{font-size:14px;font-weight:600}
-.mhd{display:flex;align-items:center;gap:12px;padding-bottom:1rem;border-bottom:1px solid var(--bd);margin-bottom:1.25rem}
-.mic{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.mgr{background:var(--grbg);border:1px solid var(--grbd)}.mbl{background:var(--blbg);border:1px solid var(--blbd)}.mam{background:var(--ambg);border:1px solid var(--ambd)}.mpu{background:var(--pubg);border:1px solid var(--pubd)}.mrd{background:var(--rdbg);border:1px solid var(--rdbd)}
-.mtitle{font-size:14px;font-weight:600;margin-bottom:2px}.msub{font-size:12px;color:var(--t2)}
-.ptable{width:100%;border-collapse:collapse;font-size:13px}
-.ptable thead th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;color:var(--t3);font-weight:500;padding:8px 12px;border-bottom:1px solid var(--bd);text-align:left}
-.ptable tbody tr{border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s}
-.ptable tbody tr:hover,.ptable tbody tr.xp{background:var(--s2)}
-.prank{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t3);width:44px}
-.pname{font-weight:600;font-size:13px}.psub{font-size:11px;color:var(--t2);margin-top:2px}
-.xin{padding:.875rem 1.1rem;border-left:3px solid var(--bl);margin:0 0 4px 44px;background:var(--s2)}
-.xlbl{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--bl);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;font-weight:600}
-.xtxt{font-size:13px;color:var(--t2);line-height:1.6}
-.sbar{display:inline-flex;align-items:center;gap:8px}
-.strack{width:52px;height:3px;border-radius:2px;background:var(--bd2);overflow:hidden;display:inline-block;vertical-align:middle}
-.sfill{height:100%;border-radius:2px}
-.snum{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;min-width:22px}
-.chip{display:inline-block;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;padding:2px 8px;border-radius:12px}
-.chi{background:var(--grbg);color:var(--gr);border:1px solid var(--grbd)}
-.chm{background:var(--ambg);color:var(--am);border:1px solid var(--ambd)}
-.chl{background:var(--rdbg);color:var(--rd);border:1px solid var(--rdbd)}
-.tag{font-size:10px;padding:2px 7px;border-radius:8px;display:inline-block;margin-right:3px;background:var(--s3);color:var(--t2);border:1px solid var(--bd);font-family:'JetBrains Mono',monospace}
-.acard{border:1px solid var(--bd);border-radius:8px;padding:1.25rem;margin-bottom:16px;background:var(--s2)}
-.acard:hover{border-color:var(--bd2)}
-.atop{display:flex;align-items:flex-start;gap:10px;margin-bottom:.875rem}
-.abadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase}
-.bhi{background:var(--ambg);color:var(--am);border:1px solid var(--ambd)}
-.bur{background:var(--rdbg);color:var(--rd);border:1px solid var(--rdbd)}
-.bgr{background:var(--grbg);color:var(--gr);border:1px solid var(--grbd)}
-.bbl{background:var(--blbg);color:var(--bl);border:1px solid var(--blbd)}
-.achan{font-size:11px;color:var(--t2);margin-bottom:4px}
-.atitle{font-size:14px;font-weight:600;margin-bottom:.625rem}
-.areason{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:.625rem}
-.aimpact{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--gr);font-weight:600;margin-bottom:.75rem}
-.waq{background:var(--s3);border:1px solid var(--bd2);border-radius:6px;padding:.875rem}
-.waql{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--bl);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:block;font-weight:600}
-.waqm{font-size:13px;color:var(--t2);font-style:italic;line-height:1.55}
-.abtns{display:flex;gap:8px;margin-top:.875rem}
-.btn-wa{font-size:12px;padding:5px 14px;border-radius:6px;font-weight:600;background:rgba(37,211,102,.1);color:#25d366;border:1px solid rgba(37,211,102,.3);text-decoration:none;font-family:'JetBrains Mono',monospace;display:inline-block}
-.evgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.evcard{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:1.25rem}
-.evcard:hover{border-color:var(--bd2)}
-.evtop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.875rem}
-.evtitle{font-size:15px;font-weight:600;margin-bottom:0}
-.evbody{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:.875rem}
-.evroi{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--gr);font-weight:600;margin-bottom:.5rem}
-.evmeta{display:flex;gap:14px;font-size:11px;color:var(--t3);font-family:'JetBrains Mono',monospace}
-.mlhdr{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr 1fr;padding:8px 14px;border-bottom:1px solid var(--bd)}
-.mlhdr span{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;color:var(--t3);font-weight:500}
-.mlrow{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr 1fr;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s;align-items:center}
-.mlrow:hover,.mlex{background:var(--s2)}
-.mlxpand{background:var(--s3);border-left:3px solid var(--bl);padding:.875rem 1rem;margin:0 14px 8px;border-radius:0 6px 6px 0}
-.mlfl{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--bl);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-weight:600}
-.mlft{font-size:13px;color:var(--t2);line-height:1.5}
-.tup{color:var(--gr);font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600}
-.tdn{color:var(--rd);font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600}
-.tsb{color:var(--am);font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600}
-.cbr{display:inline-flex;align-items:center;gap:5px}
-.cbar{height:3px;border-radius:2px;background:var(--bd2);width:36px;overflow:hidden;display:inline-block;vertical-align:middle}
-.cfill{height:100%;background:var(--bl);border-radius:2px}
-.wprof{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:1.1rem;margin-bottom:1rem}
-.wpname{font-size:15px;font-weight:700;margin-bottom:10px}
-.wprow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:13px;color:var(--t2)}
-.wprow:last-child{border:none}.wpval{font-family:'JetBrains Mono',monospace;color:var(--tx)}
-.uph{text-align:center;padding:5rem 2rem 2rem}
-.upey{font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.15em;color:var(--gr);margin-bottom:1rem}
-.upt{font-size:2.5rem;font-weight:700;letter-spacing:-.05em;line-height:1.15;margin-bottom:.75rem}
-.upt em{color:var(--gr);font-style:normal}
-.ups{font-size:14px;color:var(--t2);max-width:480px;margin:0 auto 2rem;line-height:1.7}
-.plan-card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.25rem;text-align:center}
-.plan-card.active{border-color:var(--gr);background:var(--s2)}
-.plan-name{font-size:13px;font-weight:600;margin-bottom:4px}
-.plan-price{font-size:1.5rem;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:4px}
-.plan-clients{font-size:11px;color:var(--t2);margin-bottom:.875rem}
-.sheets-panel{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem}
-.sync-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 10px;border-radius:12px;background:var(--grbg);color:var(--gr);border:1px solid var(--grbd)}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.stButton>button{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;font-family:Inter,sans-serif!important;font-size:13px!important;font-weight:500!important;border-radius:6px!important;padding:6px 16px!important}
-.stButton>button:hover{background:var(--s3)!important}
-.stTextInput>div>div>input{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:Inter,sans-serif!important;font-size:13px!important}
-.stSelectbox>div>div{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important}
-.stTabs [data-baseweb=tab-list]{background:var(--s2)!important;border-bottom:1px solid var(--bd)!important;padding:0 .5rem!important;gap:0!important}
-.stTabs [data-baseweb=tab]{color:var(--t2)!important;font-family:Inter,sans-serif!important;font-size:13px!important;font-weight:500!important;padding:10px 16px!important;border-radius:0!important;border-bottom:2px solid transparent!important}
-.stTabs [aria-selected=true]{color:var(--tx)!important;border-bottom-color:var(--bl)!important;background:transparent!important}
-textarea{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:Inter,sans-serif!important}
-.stRadio label{color:var(--t2)!important;font-size:13px!important}
-.stAlert{background:var(--s2)!important;border-radius:6px!important;color:var(--t2)!important}
-div[data-testid=stFileUploader]{background:var(--s1)!important;border:1px dashed var(--bd2)!important;border-radius:8px!important;padding:1rem!important}
-[data-testid=stMarkdownContainer] p{color:var(--t2)!important;font-size:13px!important}
-hr{border-color:var(--bd)!important}
-</style>""", unsafe_allow_html=True)
+    st.session_state["plotly_bg"] = plotly_bg
+    st.session_state["plotly_paper"] = plotly_paper
+    st.session_state["plotly_grid"] = plotly_grid
+    st.session_state["plotly_font"] = plotly_font
+    st.session_state["plotly_line"] = plotly_line
+
+    return f"""<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {{
+{vars_css}
+}}
+
+*{{box-sizing:border-box}}
+html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color:var(--tx)!important;font-family:'DM Sans',sans-serif!important}}
+[data-testid=stHeader],[data-testid=stDecoration],footer{{display:none!important}}
+[data-testid=stSidebar]{{background:var(--s1)!important;border-right:1px solid var(--bd)!important}}
+.block-container{{padding:0!important;max-width:100%!important}}
+
+.nav{{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:200}}
+.nav-logo{{display:flex;align-items:center;gap:10px}}
+.nav-icon{{width:30px;height:30px;background:var(--gr);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#000}}
+.nav-brand{{font-size:15px;font-weight:500;color:var(--tx)}}.nav-brand em{{color:var(--gr);font-style:normal}}
+.nav-right{{display:flex;align-items:center;gap:10px}}
+.nav-user{{font-size:12px;color:var(--t2);font-family:'DM Mono',monospace}}
+.nav-role{{font-size:11px;padding:2px 8px;border-radius:12px;background:var(--grbg);color:var(--gr);border:1px solid var(--grbd);font-weight:500}}
+.bc{{padding:8px 1.5rem;background:var(--s1);border-bottom:1px solid var(--bd);font-size:12px;color:var(--t3);font-family:'DM Mono',monospace}}
+.bc em{{color:var(--bl);font-style:normal}}
+.wrap{{padding:1.5rem;max-width:1440px;margin:0 auto}}
+.greet{{display:flex;align-items:center;justify-content:space-between;background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1.5rem}}
+.gt{{font-size:11px;font-family:'DM Mono',monospace;color:var(--gr);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}}
+.gn{{font-size:1.4rem;font-weight:500;letter-spacing:-.3px;margin-bottom:4px}}
+.gsub{{font-size:13px;color:var(--t2)}}
+.gstats{{display:flex;gap:2rem;text-align:right}}
+.gst{{font-family:'DM Mono',monospace}}
+.gnum{{font-size:1.4rem;font-weight:600;display:block}}
+.glbl{{font-size:11px;color:var(--t2);margin-top:2px;display:block}}
+.kgrid{{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:.5rem}}
+.kc{{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.1rem 1.3rem;position:relative;overflow:hidden;transition:border-color .15s,transform .15s}}
+.kc:hover{{border-color:var(--bd2);transform:translateY(-2px)}}
+.kc::before{{content:'';position:absolute;top:0;left:0;right:0;height:2px}}
+.kc.gr::before{{background:var(--gr)}}.kc.bl::before{{background:var(--bl)}}.kc.rd::before{{background:var(--rd)}}.kc.am::before{{background:var(--am)}}.kc.pu::before{{background:var(--pu)}}
+.kl{{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;margin-bottom:10px}}
+.kc.gr .kl{{color:var(--gr)}}.kc.bl .kl{{color:var(--bl)}}.kc.rd .kl{{color:var(--rd)}}.kc.am .kl{{color:var(--am)}}.kc.pu .kl{{color:var(--pu)}}
+.knum{{font-size:2rem;font-weight:600;letter-spacing:-.04em;line-height:1;margin-bottom:5px}}
+.kdesc{{font-size:12px;color:var(--t2);line-height:1.4;margin-bottom:8px}}
+.ksig{{font-size:11px;font-family:'DM Mono',monospace;padding-top:8px;border-top:1px solid var(--bd)}}
+.kc.gr .ksig{{color:var(--gr)}}.kc.bl .ksig{{color:var(--bl)}}.kc.rd .ksig{{color:var(--rd)}}.kc.am .ksig{{color:var(--am)}}.kc.pu .ksig{{color:var(--pu)}}
+.khint{{font-size:10px;color:var(--t3);margin-top:3px;font-family:'DM Mono',monospace}}
+.kdet{{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem}}
+.kdet-h{{display:flex;align-items:center;margin-bottom:.875rem;padding-bottom:.75rem;border-bottom:1px solid var(--bd)}}
+.kdet-t{{font-size:14px;font-weight:500}}
+.mhd{{display:flex;align-items:center;gap:12px;padding-bottom:1rem;border-bottom:1px solid var(--bd);margin-bottom:1.25rem}}
+.mic{{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}}
+.mgr{{background:var(--grbg);border:1px solid var(--grbd)}}.mbl{{background:var(--blbg);border:1px solid var(--blbd)}}.mam{{background:var(--ambg);border:1px solid var(--ambd)}}.mpu{{background:var(--pubg);border:1px solid var(--pubd)}}.mrd{{background:var(--rdbg);border:1px solid var(--rdbd)}}
+.mtitle{{font-size:14px;font-weight:500;margin-bottom:2px}}.msub{{font-size:12px;color:var(--t2)}}
+.ptable{{width:100%;border-collapse:collapse;font-size:13px}}
+.ptable thead th{{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;color:var(--t3);font-weight:500;padding:8px 12px;border-bottom:1px solid var(--bd);text-align:left}}
+.ptable tbody tr{{border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s}}
+.ptable tbody tr:hover,.ptable tbody tr.xp{{background:var(--s2)}}
+.prank{{font-family:'DM Mono',monospace;font-size:12px;color:var(--t3);width:44px}}
+.pname{{font-weight:500;font-size:13px}}.psub{{font-size:11px;color:var(--t2);margin-top:2px}}
+.xin{{padding:.875rem 1.1rem;border-left:3px solid var(--bl);margin:0 0 4px 44px;background:var(--s2)}}
+.xlbl{{font-size:10px;font-family:'DM Mono',monospace;color:var(--bl);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;font-weight:500}}
+.xtxt{{font-size:13px;color:var(--t2);line-height:1.6}}
+.sbar{{display:inline-flex;align-items:center;gap:8px}}
+.strack{{width:52px;height:3px;border-radius:2px;background:var(--bd2);overflow:hidden;display:inline-block;vertical-align:middle}}
+.sfill{{height:100%;border-radius:2px}}
+.snum{{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;min-width:22px}}
+.chip{{display:inline-block;font-size:11px;font-weight:500;font-family:'DM Mono',monospace;padding:2px 8px;border-radius:12px}}
+.chi{{background:var(--grbg);color:var(--gr);border:1px solid var(--grbd)}}
+.chm{{background:var(--ambg);color:var(--am);border:1px solid var(--ambd)}}
+.chl{{background:var(--rdbg);color:var(--rd);border:1px solid var(--rdbd)}}
+.tag{{font-size:10px;padding:2px 7px;border-radius:8px;display:inline-block;margin-right:3px;background:var(--s3);color:var(--t2);border:1px solid var(--bd);font-family:'DM Mono',monospace}}
+.acard{{border:1px solid var(--bd);border-radius:8px;padding:1.25rem;margin-bottom:16px;background:var(--s2)}}
+.acard:hover{{border-color:var(--bd2)}}
+.atop{{display:flex;align-items:flex-start;gap:10px;margin-bottom:.875rem}}
+.abadge{{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:'DM Mono',monospace;text-transform:uppercase}}
+.bhi{{background:var(--ambg);color:var(--am);border:1px solid var(--ambd)}}
+.bur{{background:var(--rdbg);color:var(--rd);border:1px solid var(--rdbd)}}
+.bgr{{background:var(--grbg);color:var(--gr);border:1px solid var(--grbd)}}
+.bbl{{background:var(--blbg);color:var(--bl);border:1px solid var(--blbd)}}
+.achan{{font-size:11px;color:var(--t2);margin-bottom:4px}}
+.atitle{{font-size:14px;font-weight:500;margin-bottom:.625rem}}
+.areason{{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:.625rem}}
+.aimpact{{font-size:12px;font-family:'DM Mono',monospace;color:var(--gr);font-weight:500;margin-bottom:.75rem}}
+.waq{{background:var(--s3);border:1px solid var(--bd2);border-radius:6px;padding:.875rem}}
+.waql{{font-size:10px;font-family:'DM Mono',monospace;color:var(--bl);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:block;font-weight:500}}
+.waqm{{font-size:13px;color:var(--t2);font-style:italic;line-height:1.55}}
+.abtns{{display:flex;gap:8px;margin-top:.875rem}}
+.btn-wa{{font-size:12px;padding:5px 14px;border-radius:6px;font-weight:500;background:rgba(37,211,102,.1);color:#25d366;border:1px solid rgba(37,211,102,.3);text-decoration:none;font-family:'DM Mono',monospace;display:inline-block}}
+.evgrid{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}
+.evcard{{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:1.25rem}}
+.evcard:hover{{border-color:var(--bd2)}}
+.evtop{{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.875rem}}
+.evtitle{{font-size:15px;font-weight:500;margin-bottom:0}}
+.evbody{{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:.875rem}}
+.evroi{{font-size:12px;font-family:'DM Mono',monospace;color:var(--gr);font-weight:500;margin-bottom:.5rem}}
+.evmeta{{display:flex;gap:14px;font-size:11px;color:var(--t3);font-family:'DM Mono',monospace}}
+.mlhdr{{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr 1fr;padding:8px 14px;border-bottom:1px solid var(--bd)}}
+.mlhdr span{{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;color:var(--t3);font-weight:500}}
+.mlrow{{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr 1fr;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s;align-items:center}}
+.mlrow:hover,.mlex{{background:var(--s2)}}
+.mlxpand{{background:var(--s3);border-left:3px solid var(--bl);padding:.875rem 1rem;margin:0 14px 8px;border-radius:0 6px 6px 0}}
+.mlfl{{font-size:10px;font-family:'DM Mono',monospace;color:var(--bl);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-weight:500}}
+.mlft{{font-size:13px;color:var(--t2);line-height:1.5}}
+.tup{{color:var(--gr);font-size:11px;font-family:'DM Mono',monospace;font-weight:500}}
+.tdn{{color:var(--rd);font-size:11px;font-family:'DM Mono',monospace;font-weight:500}}
+.tsb{{color:var(--am);font-size:11px;font-family:'DM Mono',monospace;font-weight:500}}
+.cbr{{display:inline-flex;align-items:center;gap:5px}}
+.cbar{{height:3px;border-radius:2px;background:var(--bd2);width:36px;overflow:hidden;display:inline-block;vertical-align:middle}}
+.cfill{{height:100%;background:var(--bl);border-radius:2px}}
+.wprof{{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:1.1rem;margin-bottom:1rem}}
+.wpname{{font-size:15px;font-weight:600;margin-bottom:10px}}
+.wprow{{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:13px;color:var(--t2)}}
+.wprow:last-child{{border:none}}.wpval{{font-family:'DM Mono',monospace;color:var(--tx)}}
+.uph{{text-align:center;padding:5rem 2rem 2rem}}
+.upey{{font-size:11px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.15em;color:var(--gr);margin-bottom:1rem}}
+.upt{{font-size:2.5rem;font-weight:600;letter-spacing:-.05em;line-height:1.15;margin-bottom:.75rem}}
+.upt em{{color:var(--gr);font-style:normal}}
+.ups{{font-size:14px;color:var(--t2);max-width:480px;margin:0 auto 2rem;line-height:1.7}}
+.plan-card{{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.25rem;text-align:center}}
+.plan-card.active{{border-color:var(--gr);background:var(--s2)}}
+.plan-name{{font-size:13px;font-weight:500;margin-bottom:4px}}
+.plan-price{{font-size:1.5rem;font-weight:600;font-family:'DM Mono',monospace;margin-bottom:4px}}
+.plan-clients{{font-size:11px;color:var(--t2);margin-bottom:.875rem}}
+.sheets-panel{{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem}}
+.sync-badge{{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:12px;background:var(--grbg);color:var(--gr);border:1px solid var(--grbd)}}
+.sync-dot{{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:pulse 2s infinite}}
+@keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:.4}}}}
+
+.stButton>button{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;font-family:'DM Sans',sans-serif!important;font-size:13px!important;font-weight:400!important;border-radius:6px!important;padding:6px 16px!important}}
+.stButton>button:hover{{background:var(--s3)!important}}
+.stTextInput>div>div>input{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:'DM Sans',sans-serif!important;font-size:13px!important}}
+.stSelectbox>div>div{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important}}
+.stTabs [data-baseweb=tab-list]{{background:var(--s2)!important;border-bottom:1px solid var(--bd)!important;padding:0 .5rem!important;gap:0!important}}
+.stTabs [data-baseweb=tab]{{color:var(--t2)!important;font-family:'DM Sans',sans-serif!important;font-size:13px!important;font-weight:400!important;padding:10px 16px!important;border-radius:0!important;border-bottom:2px solid transparent!important}}
+.stTabs [aria-selected=true]{{color:var(--tx)!important;border-bottom-color:var(--bl)!important;background:transparent!important}}
+textarea{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:'DM Sans',sans-serif!important}}
+.stRadio label{{color:var(--t2)!important;font-size:13px!important}}
+.stAlert{{background:var(--s2)!important;border-radius:6px!important;color:var(--t2)!important}}
+div[data-testid=stFileUploader]{{background:var(--s1)!important;border:1px dashed var(--bd2)!important;border-radius:8px!important;padding:1rem!important}}
+[data-testid=stMarkdownContainer] p{{color:var(--t2)!important;font-size:13px!important}}
+hr{{border-color:var(--bd)!important}}
+
+.theme-toggle-btn {{
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: var(--s1);
+  border: 1px solid var(--bd2);
+  color: var(--tx);
+  border-radius: 50px;
+  padding: 8px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}}
+</style>"""
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def _fi(v):
@@ -441,7 +458,7 @@ def _num(v):
     try: return float(str(v).replace(",","").replace("\u20b9","").strip())
     except: return 0.0
 
-def _mago(d):
+def _mago2(d):
     if not d or str(d).strip() in ("","nan","None"): return 99
     try:
         dt=pd.to_datetime(str(d),dayfirst=True,errors="coerce")
@@ -455,11 +472,30 @@ def now_ist():
         return datetime.datetime.now(pytz.timezone("Asia/Kolkata"))
     except: return datetime.datetime.now()+datetime.timedelta(hours=5,minutes=30)
 
+def get_pc():
+    """Plotly chart config based on current theme"""
+    bg   = st.session_state.get("plotly_bg",   "#0d1117")
+    paper= st.session_state.get("plotly_paper", "#161b22")
+    grid = st.session_state.get("plotly_grid",  "#21262d")
+    font = st.session_state.get("plotly_font",  "#8b949e")
+    line = st.session_state.get("plotly_line",  "#30363d")
+    return {
+        "paper_bgcolor": paper,
+        "plot_bgcolor":  bg,
+        "font": dict(family="DM Sans,sans-serif", color=font, size=11),
+        "margin": dict(l=8,r=8,t=32,b=8),
+        "showlegend": False,
+        "xaxis": dict(showgrid=False, zeroline=False, color=font,
+                      tickfont=dict(size=10), linecolor=line),
+        "yaxis": dict(showgrid=True, gridcolor=grid, zeroline=False,
+                      color=font, tickfont=dict(size=10))
+    }
+
 AGENDAS=[
     "Your portfolio signals are ready. A few clients need your attention today.",
     "Fresh intelligence loaded. The engine has ranked your priorities.",
     "Three things need your eye before you close today.",
-    "Your clients health scores are updated. Let make today count.",
+    "Your clients health scores are updated. Let's make today count.",
     "Intelligence engine active. Your best opportunities are surfaced.",
 ]
 
@@ -488,7 +524,6 @@ DEMO=[
 
 def prep_demo():
     if SCORING_OK:
-        from scoring import auto_map_columns
         mapping = {k: k for k in ["name","age","portfolio","sip","lastContact","goal","tenure","nominee","phone"]}
         clients = process_dataframe(pd.DataFrame(DEMO), mapping)
     else:
@@ -524,18 +559,27 @@ def export_excel(clients):
     buf.seek(0)
     return buf.getvalue()
 
-PC={"paper_bgcolor":"#0d1117","plot_bgcolor":"#161b22",
-    "font":dict(family="Inter,sans-serif",color="#8b949e",size=11),
-    "margin":dict(l=8,r=8,t=32,b=8),"showlegend":False,
-    "xaxis":dict(showgrid=False,zeroline=False,color="#8b949e",tickfont=dict(size=10),linecolor="#30363d"),
-    "yaxis":dict(showgrid=True,gridcolor="#21262d",zeroline=False,color="#8b949e",tickfont=dict(size=10))}
+# ── Theme toggle button (floating) ────────────────────────────────────────────
+def show_theme_toggle():
+    theme = st.session_state.get("theme", "dark")
+    icon  = "☀️" if theme == "dark" else "🌙"
+    label = "Light mode" if theme == "dark" else "Dark mode"
+    # Render a small sidebar button instead of floating (Streamlit-safe)
+    with st.sidebar:
+        if st.button(f"{icon}  {label}", key="theme_btn_sidebar"):
+            st.session_state.theme = "light" if theme == "dark" else "dark"
+            st.rerun()
 
 # ── NAV ───────────────────────────────────────────────────────────────────────
 def show_nav():
-    user = st.session_state.get("user_name","")
+    # Inject CSS first
+    st.markdown(get_theme_css(), unsafe_allow_html=True)
+    show_theme_toggle()
+
+    user    = st.session_state.get("user_name","")
     company = st.session_state.get("user_company","")
-    role = st.session_state.get("user_role","advisor")
-    plan = st.session_state.get("user_plan","free")
+    role    = st.session_state.get("user_role","advisor")
+    plan    = st.session_state.get("user_plan","free")
     rl = "Owner" if role=="owner" else "Advisor"
     plan_colors = {"free":"#6e7681","starter":"#58a6ff","growth":"#3fb950","firm":"#d29922"}
     pc = plan_colors.get(plan,"#6e7681")
@@ -547,7 +591,7 @@ def show_nav():
       <div class="nav-right">
         <span class="nav-user">{user} \u00b7 {company}</span>
         <span class="nav-role">{rl}</span>
-        <span style="font-size:11px;padding:2px 8px;border-radius:12px;background:{pc}18;color:{pc};border:1px solid {pc}44;font-family:JetBrains Mono,monospace;font-weight:600">{plan.upper()}</span>
+        <span style="font-size:11px;padding:2px 8px;border-radius:12px;background:{pc}18;color:{pc};border:1px solid {pc}44;font-family:'DM Mono',monospace;font-weight:500">{plan.upper()}</span>
       </div>
     </div>""", unsafe_allow_html=True)
     c1,c2,c3,c4 = st.columns([6,1,1,1])
@@ -565,13 +609,15 @@ def show_nav():
 
 # ── LOGIN ─────────────────────────────────────────────────────────────────────
 def show_login():
+    st.markdown(get_theme_css(), unsafe_allow_html=True)
+    show_theme_toggle()
     _,col,_ = st.columns([1,1,1])
     with col:
         st.markdown("""<div style="text-align:center;margin-top:3rem;margin-bottom:2rem">
-          <div style="width:48px;height:48px;background:#3fb950;border-radius:10px;
-            display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#000;margin-bottom:.875rem">\u26a1</div>
-          <div style="font-size:1.3rem;font-weight:700;letter-spacing:-.3px;color:#e6edf3">AdvisorIQ</div>
-          <div style="font-size:13px;color:#8b949e;margin-top:4px">Portfolio intelligence platform</div>
+          <div style="width:48px;height:48px;background:var(--gr);border-radius:10px;
+            display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:#000;margin-bottom:.875rem">\u26a1</div>
+          <div style="font-size:1.3rem;font-weight:600;letter-spacing:-.3px;color:var(--tx)">AdvisorIQ</div>
+          <div style="font-size:13px;color:var(--t2);margin-top:4px">Portfolio intelligence platform</div>
         </div>""", unsafe_allow_html=True)
         t1,t2 = st.tabs(["Sign in","Create account"])
         with t1:
@@ -584,11 +630,11 @@ def show_login():
                     if DB_OK:
                         row = db.login_user(u, p)
                         if row:
-                            st.session_state.user_id = row["id"]
-                            st.session_state.user_name = row["full_name"]
+                            st.session_state.user_id      = row["id"]
+                            st.session_state.user_name    = row["full_name"]
                             st.session_state.user_company = row["company"]
-                            st.session_state.user_role = row["role"]
-                            st.session_state.user_plan = row.get("plan","free")
+                            st.session_state.user_role    = row["role"]
+                            st.session_state.user_plan    = row.get("plan","free")
                             saved = db.load_clients(row["id"])
                             if saved: st.session_state.clients = saved
                             st.session_state.screen = "upload" if not saved else "dashboard"
@@ -598,10 +644,10 @@ def show_login():
                 else: st.warning("Please enter both fields.")
         with t2:
             st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
-            rn = st.text_input("Full name", placeholder="Ramesh Patel", key="r_n")
-            rc = st.text_input("Company", placeholder="Patel Wealth Advisory", key="r_c")
-            ru = st.text_input("Username", placeholder="ramesh.patel", key="r_u")
-            rp = st.text_input("Password", type="password", placeholder="Min 6 characters", key="r_p")
+            rn = st.text_input("Full name",  placeholder="Ramesh Patel",            key="r_n")
+            rc = st.text_input("Company",    placeholder="Patel Wealth Advisory",   key="r_c")
+            ru = st.text_input("Username",   placeholder="ramesh.patel",            key="r_u")
+            rp = st.text_input("Password",   type="password", placeholder="Min 6 characters", key="r_p")
             rr = st.selectbox("Role", ["Owner / Director","Senior Advisor","Advisor","Team Member"], key="r_r")
             rm = {"Owner / Director":"owner","Senior Advisor":"advisor","Advisor":"advisor","Team Member":"staff"}
             st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
@@ -611,7 +657,7 @@ def show_login():
                     elif DB_OK:
                         ok,msg = db.create_user(ru, rp, rn, rc, rm[rr])
                         if ok: st.success(f"Account created! Sign in with: {ru}")
-                        else: st.error(msg)
+                        else:  st.error(msg)
                 else: st.warning("Please fill in all fields.")
 
 # ── UPLOAD ────────────────────────────────────────────────────────────────────
@@ -620,7 +666,6 @@ def show_upload():
     st.markdown('<div class="bc">Upload \u2192 Mapping \u2192 <em>Dashboard</em></div>', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
-    # Sheets sync status banner
     user_id = st.session_state.get("user_id")
     if SHEETS_OK and user_id:
         status = get_sync_status(user_id)
@@ -630,7 +675,7 @@ def show_upload():
               <div style="display:flex;align-items:center;justify-content:space-between">
                 <div>
                   <span class="sync-badge"><span class="sync-dot"></span> Google Sheets Connected</span>
-                  <span style="font-size:12px;color:#8b949e;margin-left:10px;font-family:JetBrains Mono,monospace">Last synced: {last}</span>
+                  <span style="font-size:12px;color:var(--t2);margin-left:10px;font-family:'DM Mono',monospace">Last synced: {last}</span>
                 </div>
               </div>
             </div>""", unsafe_allow_html=True)
@@ -672,14 +717,14 @@ def show_upload():
     _,cc,_ = st.columns([1,2,1])
     with cc:
         uploaded = st.file_uploader("", type=["xlsx","xls","csv"], label_visibility="collapsed")
-        st.markdown("<div style='text-align:center;font-size:11px;color:#6e7681;margin-top:.5rem'>Any column format \u00b7 Excel or CSV</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center;font-size:11px;color:var(--t3);margin-top:.5rem'>Any column format \u00b7 Excel or CSV</div>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
         if st.button("\U0001f4ca Load demo data \u2192", use_container_width=True):
             st.session_state.use_demo = True; st.session_state.screen = "map"; st.rerun()
 
         if SHEETS_OK:
-            st.markdown("<div style='text-align:center;font-size:12px;color:#8b949e;margin:.75rem 0 .5rem'>\u2014 or connect Google Sheets \u2014</div>", unsafe_allow_html=True)
+            st.markdown("<div style='text-align:center;font-size:12px;color:var(--t2);margin:.75rem 0 .5rem'>\u2014 or connect Google Sheets \u2014</div>", unsafe_allow_html=True)
             sheets_url = st.text_input("", placeholder="https://docs.google.com/spreadsheets/d/...", label_visibility="collapsed", key="sheets_url_input")
             if st.button("Connect Google Sheets \u2192", use_container_width=True, key="connect_sheets"):
                 if sheets_url.strip():
@@ -722,23 +767,23 @@ def show_mapping(df):
         best = mapping.get(key)
         with g[i % 2]:
             opts = ["\u2014 skip \u2014"] + cols
-            idx = (cols.index(best)+1) if best and best in cols else 0
-            sel = st.selectbox(field_labels[key], opts, index=idx, key=f"m_{key}")
+            idx  = (cols.index(best)+1) if best and best in cols else 0
+            sel  = st.selectbox(field_labels[key], opts, index=idx, key=f"m_{key}")
             user_mapping[key] = sel if sel != "\u2014 skip \u2014" else None
     st.markdown("<br>", unsafe_allow_html=True)
     c1,c2,_ = st.columns([1,1,4])
     with c1:
         if st.button("Run engine \u2192", use_container_width=True):
             with st.spinner("Processing and scoring all clients..."):
-                 
-
                 if SCORING_OK:
                     clients = process_dataframe(df, user_mapping)
-                    clients = predict_batch(clients)   # 👈 MOST IMPORTANT LINE
+                    if ML_OK:
+                        clients = predict_batch(clients)
                     merged = 0
                 else:
                     clients = df.to_dict("records")
-                    clients = predict_batch(clients)   # 👈 aa pan add karo safety mate
+                    if ML_OK:
+                        clients = predict_batch(clients)
                     merged = 0
             st.session_state.clients = clients
             st.session_state.merged_count = merged
@@ -757,12 +802,16 @@ def show_settings():
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     user_id = st.session_state.get("user_id")
-    plan = st.session_state.get("user_plan","free")
+    plan    = st.session_state.get("user_plan","free")
 
     t1, t2, t3 = st.tabs(["Google Sheets", "Subscription", "ML Model Info"])
 
     with t1:
-        st.markdown('\n        <div class="mhd" style="margin-top:.5rem">\n          <div class="mic mgr">\U0001f4ca</div>\n          <div><div class="mtitle">Google Sheets Auto-Sync</div>\n          <div class="msub">Connect your client Excel \u2192 Google Sheets \u2192 App syncs automatically every 5 minutes</div></div>\n        </div>', unsafe_allow_html=True)
+        st.markdown("""<div class="mhd" style="margin-top:.5rem">
+          <div class="mic mgr">\U0001f4ca</div>
+          <div><div class="mtitle">Google Sheets Auto-Sync</div>
+          <div class="msub">Connect your client Excel \u2192 Google Sheets \u2192 App syncs automatically every 5 minutes</div></div>
+        </div>""", unsafe_allow_html=True)
         if SHEETS_OK and user_id:
             status = get_sync_status(user_id)
             if status.get("has_sheets"):
@@ -780,9 +829,9 @@ def show_settings():
                             db.update_sheets_url(user_id, new_url)
                             st.success(f"\u2713 {msg}"); st.rerun()
                         else: st.error(msg)
-                st.markdown("""<div style='font-size:12px;color:#8b949e;margin-top:1rem;line-height:1.7'>
-                  <strong style='color:#e6edf3'>How to set up:</strong><br>
-                  1. Go to <a href='https://sheets.google.com' target='_blank' style='color:#58a6ff'>sheets.google.com</a> \u2192 Create new sheet<br>
+                st.markdown("""<div style='font-size:12px;color:var(--t2);margin-top:1rem;line-height:1.7'>
+                  <strong style='color:var(--tx)'>How to set up:</strong><br>
+                  1. Go to <a href='https://sheets.google.com' target='_blank' style='color:var(--bl)'>sheets.google.com</a> \u2192 Create new sheet<br>
                   2. Copy your Excel data into the sheet<br>
                   3. Click Share \u2192 copy the link \u2192 paste above<br>
                   4. App will auto-sync every 5 minutes when you update the sheet
@@ -791,7 +840,11 @@ def show_settings():
             st.warning("Google Sheets requires gspread package. Run: pip install gspread google-auth")
 
     with t2:
-        st.markdown('\n        <div class="mhd" style="margin-top:.5rem">\n          <div class="mic mam">\U0001f4b0</div>\n          <div><div class="mtitle">Subscription Plans</div>\n          <div class="msub">Upgrade to unlock more clients, WhatsApp automation, and API access</div></div>\n        </div>', unsafe_allow_html=True)
+        st.markdown("""<div class="mhd" style="margin-top:.5rem">
+          <div class="mic mam">\U0001f4b0</div>
+          <div><div class="mtitle">Subscription Plans</div>
+          <div class="msub">Upgrade to unlock more clients, WhatsApp automation, and API access</div></div>
+        </div>""", unsafe_allow_html=True)
         plan_data = [
             ("free","Free","\u20b90","25 clients","—","—"),
             ("starter","Starter","\u20b91,999/mo","100 clients","—","—"),
@@ -802,21 +855,25 @@ def show_settings():
         for col,(pid,pname,pprice,pclients,pwa,papi) in zip([p1,p2,p3,p4],plan_data):
             is_active = plan == pid
             with col:
-                border = "border:1px solid #3fb950" if is_active else "border:1px solid #30363d"
-                st.markdown(f"""<div style="background:#161b22;{border};border-radius:10px;padding:1.25rem;text-align:center;margin-bottom:1rem">
-                  <div style="font-size:13px;font-weight:600;margin-bottom:6px">{pname}</div>
-                  <div style="font-size:1.4rem;font-weight:700;font-family:JetBrains Mono,monospace;color:#e6edf3;margin-bottom:4px">{pprice}</div>
-                  <div style="font-size:11px;color:#8b949e;margin-bottom:.875rem">{pclients}</div>
-                  <div style="font-size:11px;color:#8b949e">WhatsApp: {pwa}</div>
-                  <div style="font-size:11px;color:#8b949e">API: {papi}</div>
-                  {"<div style=\'margin-top:.875rem;font-size:11px;color:#3fb950;font-family:JetBrains Mono,monospace;font-weight:600\'>CURRENT PLAN</div>" if is_active else ""}
+                border = "border:1px solid var(--gr)" if is_active else "border:1px solid var(--bd)"
+                st.markdown(f"""<div style="background:var(--s1);{border};border-radius:10px;padding:1.25rem;text-align:center;margin-bottom:1rem">
+                  <div style="font-size:13px;font-weight:500;margin-bottom:6px">{pname}</div>
+                  <div style="font-size:1.4rem;font-weight:600;font-family:'DM Mono',monospace;color:var(--tx);margin-bottom:4px">{pprice}</div>
+                  <div style="font-size:11px;color:var(--t2);margin-bottom:.875rem">{pclients}</div>
+                  <div style="font-size:11px;color:var(--t2)">WhatsApp: {pwa}</div>
+                  <div style="font-size:11px;color:var(--t2)">API: {papi}</div>
+                  {"<div style='margin-top:.875rem;font-size:11px;color:var(--gr);font-family:DM Mono,monospace;font-weight:500'>CURRENT PLAN</div>" if is_active else ""}
                 </div>""", unsafe_allow_html=True)
                 if not is_active and pid != "free":
                     if st.button(f"Upgrade \u2192 {pname}", key=f"up_{pid}", use_container_width=True):
                         st.info(f"Razorpay integration: set RAZORPAY_KEY_ID in .env to enable payments for {pname} plan.")
 
     with t3:
-        st.markdown('\n        <div class="mhd" style="margin-top:.5rem">\n          <div class="mic mpu">\u25c8</div>\n          <div><div class="mtitle">ML Model Information</div>\n          <div class="msub">GradientBoosting models for priority scoring and churn prediction</div></div>\n        </div>', unsafe_allow_html=True)
+        st.markdown("""<div class="mhd" style="margin-top:.5rem">
+          <div class="mic mpu">\u25c8</div>
+          <div><div class="mtitle">ML Model Information</div>
+          <div class="msub">GradientBoosting models for priority scoring and churn prediction</div></div>
+        </div>""", unsafe_allow_html=True)
         if ML_OK:
             meta = get_model_meta()
             if meta:
@@ -848,30 +905,28 @@ def show_dashboard(clients):
     st.markdown('<div class="bc">Upload \u2192 Mapping \u2192 <em>Intelligence Dashboard</em></div>', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
-    aum = sum(_num(c.get("portfolio",0)) for c in clients)
-    high = [c for c in clients if c.get("priority")=="High"]
-    at_risk = [c for c in clients if c.get("churn",0)>50]
-    no_sip = [c for c in clients if "No SIP" in c.get("flags",[])]
-    no_nom = [c for c in clients if "No Nominee" in c.get("flags",[])]
-    hni = [c for c in clients if "High Value" in c.get("flags",[])]
+    aum      = sum(_num(c.get("portfolio",0)) for c in clients)
+    high     = [c for c in clients if c.get("priority")=="High"]
+    at_risk  = [c for c in clients if c.get("churn",0)>50]
+    no_sip   = [c for c in clients if "No SIP" in c.get("flags",[])]
+    no_nom   = [c for c in clients if "No Nominee" in c.get("flags",[])]
+    hni      = [c for c in clients if "High Value" in c.get("flags",[])]
     risk_aum = sum(_num(c.get("portfolio",0)) for c in at_risk)
 
-    user = st.session_state.get("user_name","")
-    now = now_ist()
+    user     = st.session_state.get("user_name","")
+    now      = now_ist()
     greeting = "Good morning" if now.hour<12 else ("Good afternoon" if now.hour<17 else "Good evening")
     if "agenda" not in st.session_state: st.session_state.agenda = random.choice(AGENDAS)
     agenda = st.session_state.agenda
-    pct = round(len(high)/len(clients)*100) if clients else 0
+    pct    = round(len(high)/len(clients)*100) if clients else 0
 
-    # Sheets sync indicator
     user_id = st.session_state.get("user_id")
     if SHEETS_OK and user_id:
         status = get_sync_status(user_id)
         if status.get("has_sheets"):
             last = status.get("last_synced","Never")
-            st.markdown(f'<div style="font-size:11px;color:#8b949e;font-family:JetBrains Mono,monospace;margin-bottom:.75rem">\U0001f4ca Google Sheets connected \u00b7 Last synced: {last}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:11px;color:var(--t2);font-family:\'DM Mono\',monospace;margin-bottom:.75rem">\U0001f4ca Google Sheets connected \u00b7 Last synced: {last}</div>', unsafe_allow_html=True)
 
-    # Greeting
     st.markdown(f"""<div class="greet">
       <div>
         <div class="gt">\u26a1 {now.strftime("%A, %d %B %Y")} \u00b7 {now.strftime("%I:%M %p")} IST</div>
@@ -879,13 +934,12 @@ def show_dashboard(clients):
         <div class="gsub">{agenda}</div>
       </div>
       <div class="gstats">
-        <div class="gst"><span class="gnum" style="color:#3fb950">{len(high)}</span><span class="glbl">Call today</span></div>
-        <div class="gst"><span class="gnum" style="color:#f85149">{len(at_risk)}</span><span class="glbl">Leaving risk</span></div>
-        <div class="gst"><span class="gnum" style="color:#e6edf3">{_fi(aum)}</span><span class="glbl">Total AUM</span></div>
+        <div class="gst"><span class="gnum" style="color:var(--gr)">{len(high)}</span><span class="glbl">Call today</span></div>
+        <div class="gst"><span class="gnum" style="color:var(--rd)">{len(at_risk)}</span><span class="glbl">Leaving risk</span></div>
+        <div class="gst"><span class="gnum" style="color:var(--tx)">{_fi(aum)}</span><span class="glbl">Total AUM</span></div>
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # KPI cards
     st.markdown(f"""<div class="kgrid">
       <div class="kc gr"><div class="kl">Total AUM</div><div class="knum">{_fi(aum)}</div>
         <div class="kdesc">{len(clients)} clients \u00b7 {len(hni)} high-value (50L+)</div>
@@ -904,10 +958,9 @@ def show_dashboard(clients):
         <div class="ksig">Compliance risk for family</div><div class="khint">\u25bc Tap to see who</div></div>
     </div>""", unsafe_allow_html=True)
 
-    # KPI expand buttons
     k1,k2,k3,k4,k5 = st.columns(5)
-    kdata = [(k1,"kaum","Total AUM",clients),(k2,"khigh","Ready to act",high),
-             (k3,"krisk","Leaving risk",at_risk),(k4,"ksip","Revenue gap",no_sip),(k5,"knom","Paperwork due",no_nom)]
+    kdata  = [(k1,"kaum","Total AUM",clients),(k2,"khigh","Ready to act",high),
+              (k3,"krisk","Leaving risk",at_risk),(k4,"ksip","Revenue gap",no_sip),(k5,"knom","Paperwork due",no_nom)]
     active = st.session_state.get("kpi_open", None)
     for col,key,label,lst in kdata:
         with col:
@@ -917,11 +970,11 @@ def show_dashboard(clients):
 
     if active:
         dmap = {
-            "kaum":("Total AUM breakdown",clients),
-            "khigh":("Ready to act \u2014 call these first",high),
-            "krisk":("Leaving risk \u2014 contact urgently",at_risk),
-            "ksip":("Revenue gap \u2014 no SIP despite portfolio",no_sip),
-            "knom":("Paperwork due \u2014 nominee missing",no_nom),
+            "kaum":  ("Total AUM breakdown", clients),
+            "khigh": ("Ready to act \u2014 call these first", high),
+            "krisk": ("Leaving risk \u2014 contact urgently", at_risk),
+            "ksip":  ("Revenue gap \u2014 no SIP despite portfolio", no_sip),
+            "knom":  ("Paperwork due \u2014 nominee missing", no_nom),
         }
         if active in dmap:
             dlbl, dlst = dmap[active]
@@ -933,73 +986,83 @@ def show_dashboard(clients):
                 rd += f"""<tr><td class="prank">#{i+1}</td>
                   <td><div class="pname">{c.get("name","\u2014")}</div>
                   <div class="psub">{c.get("goal","\u2014")} \u00b7 Age {c.get("age","\u2014")}</div></td>
-                  <td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">{_fi(c.get("portfolio",0))}</td>
+                  <td style="font-family:'DM Mono',monospace;font-size:12px">{_fi(c.get("portfolio",0))}</td>
                   <td><div class="sbar"><span class="snum" style="color:{fill}">{sc}</span>
                   <span class="strack"><span class="sfill" style="width:{sc}%;background:{fill}"></span></span></div></td>
                   <td><span class="chip {cc2}">{pr}</span></td>
-                  <td style="font-size:11px;font-family:\'JetBrains Mono\',monospace;color:#8b949e">{" \u00b7 ".join(c.get("flags",[])[:2]) or "\u2014"}</td></tr>"""
+                  <td style="font-size:11px;font-family:'DM Mono',monospace;color:var(--t2)">{" \u00b7 ".join(c.get("flags",[])[:2]) or "\u2014"}</td></tr>"""
             st.markdown(f"""<div class="kdet">
-              <div class="kdet-h"><span class="kdet-t">{dlbl} <span style="font-size:12px;color:#8b949e;font-weight:400">({len(dlst)} clients)</span></span></div>
+              <div class="kdet-h"><span class="kdet-t">{dlbl} <span style="font-size:12px;color:var(--t2);font-weight:400">({len(dlst)} clients)</span></span></div>
               <div style="overflow-x:auto"><table class="ptable" style="margin:0">
               <thead><tr><th></th><th>Client</th><th>Portfolio</th><th>Health score</th><th>Status</th><th>Alerts</th></tr></thead>
               <tbody>{rd}</tbody></table></div></div>""", unsafe_allow_html=True)
 
-    # Charts
     st.markdown('<div style="height:1.5rem"></div>', unsafe_allow_html=True)
+
+    # ── Charts ────────────────────────────────────────────────────────────────
+    PC = get_pc()
     gc1,gc2,gc3 = st.columns(3)
     with gc1:
-        sv = [sum(_num(c.get("portfolio",0)) for c in clients if c.get("priority")==p)/1e5 for p in ["High","Medium","Low"]]
+        sv  = [sum(_num(c.get("portfolio",0)) for c in clients if c.get("priority")==p)/1e5 for p in ["High","Medium","Low"]]
         fig = go.Figure(go.Bar(x=["Ready","Medium","Needs work"],y=[round(v,1) for v in sv],
             marker_color=["#3fb950","#d29922","#f85149"],marker_line_width=0,
-            text=[f"\u20b9{v:.1f}L" for v in sv],textposition="outside",textfont=dict(color="#e6edf3",size=10)))
-        fig.update_layout(**{**PC,"title":dict(text="Portfolio by status",font=dict(size=12,color="#e6edf3"),x=0)})
+            text=[f"\u20b9{v:.1f}L" for v in sv],textposition="outside",
+            textfont=dict(color=PC["font"]["color"],size=10)))
+        fig.update_layout(**{**PC,"title":dict(text="Portfolio by status",font=dict(size=12,color=PC["font"]["color"]),x=0)})
         fig.update_traces(width=0.5)
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar":False})
     with gc2:
         scores = [c.get("score",0) for c in clients]
-        bins=[0,20,40,60,80,101]; lbs=["0-20","21-40","41-60","61-80","81-100"]
+        bins=[0,20,40,60,80,101]; lbs=["0–20","21–40","41–60","61–80","81–100"]
         cts=[sum(1 for s in scores if bins[i]<=s<bins[i+1]) for i in range(5)]
-        fig2 = go.Figure(go.Bar(x=lbs,y=cts,marker_color=["#f85149","#f85149","#d29922","#3fb950","#3fb950"],
-            marker_line_width=0,text=cts,textposition="outside",textfont=dict(color="#e6edf3",size=10)))
-        fig2.update_layout(**{**PC,"title":dict(text="Health score spread",font=dict(size=12,color="#e6edf3"),x=0)})
+        fig2 = go.Figure(go.Bar(x=lbs,y=cts,
+            marker_color=["#f85149","#f85149","#d29922","#3fb950","#3fb950"],
+            marker_line_width=0,text=cts,textposition="outside",
+            textfont=dict(color=PC["font"]["color"],size=10)))
+        fig2.update_layout(**{**PC,"title":dict(text="Health score spread",font=dict(size=12,color=PC["font"]["color"]),x=0)})
         fig2.update_traces(width=0.6)
         st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar":False})
     with gc3:
-        sx=[c.get("score",0) for c in clients]; sy=[c.get("churn",0) for c in clients]
-        sn=[c.get("name","") for c in clients]
+        sx =[c.get("score",0)  for c in clients]
+        sy =[c.get("churn",0)  for c in clients]
+        sn =[c.get("name","")  for c in clients]
         scc=["#f85149" if c.get("churn",0)>50 else ("#d29922" if c.get("churn",0)>25 else "#3fb950") for c in clients]
         fig3 = go.Figure(go.Scatter(x=sx,y=sy,mode="markers",
             marker=dict(color=scc,size=8,line=dict(width=0)),text=sn,
             hovertemplate="<b>%{text}</b><br>Score: %{x}<br>Risk: %{y}%<extra></extra>"))
-        fig3.update_layout(**{**PC,"title":dict(text="Health vs leaving risk",font=dict(size=12,color="#e6edf3"),x=0),
+        fig3.update_layout(**{**PC,
+            "title":dict(text="Health vs leaving risk",font=dict(size=12,color=PC["font"]["color"]),x=0),
             "xaxis":dict(**PC["xaxis"],title="Health score",range=[0,105]),
             "yaxis":dict(**PC["yaxis"],title="Leaving risk %",range=[0,105])})
         st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar":False})
 
-    # Tabs
+    # ── Tabs ──────────────────────────────────────────────────────────────────
     st.markdown('<div style="height:1rem"></div>', unsafe_allow_html=True)
-    tab1,tab2,tab3,tab4,tab5 = st.tabs(["Priority Rankings","Smart Next Best Action","Event Intelligence","ML Prediction Engine","WhatsApp Drafts"])
+    tab1,tab2,tab3,tab4,tab5 = st.tabs([
+        "Priority Rankings","Smart Next Best Action",
+        "Event Intelligence","ML Prediction Engine","WhatsApp Drafts"
+    ])
 
-    # TAB 1
+    # TAB 1 ── Priority Rankings
     with tab1:
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
         st.markdown('<div class="mhd"><div class="mic mbl">\u2261</div><div><div class="mtitle">Priority Rankings</div><div class="msub">Sorted by ML health score \u00b7 Click any row for strategic recommendation</div></div></div>', unsafe_allow_html=True)
         sf1,sf2,sf3,sf4 = st.columns([3,2,1.2,1.2])
-        with sf1: sq = st.text_input("", placeholder="\U0001f50d  Search client name or product...", label_visibility="collapsed", key="sq")
+        with sf1: sq   = st.text_input("", placeholder="\U0001f50d  Search client name or product...", label_visibility="collapsed", key="sq")
         with sf2: fsel = st.selectbox("",["All clients","Ready to act","Medium","Needs attention","Leaving risk","No SIP","No Nominee"],label_visibility="collapsed")
-        with sf3: amin = st.number_input("Min AUM (L)", min_value=0, max_value=10000, value=0, step=10, label_visibility="collapsed", key="amin")
+        with sf3: amin = st.number_input("Min AUM (L)", min_value=0, max_value=10000, value=0,     step=10, label_visibility="collapsed", key="amin")
         with sf4: amax = st.number_input("Max AUM (L)", min_value=0, max_value=10000, value=10000, step=10, label_visibility="collapsed", key="amax")
         filtered = clients
-        if "Ready" in fsel: filtered=[c for c in clients if c.get("priority")=="High"]
+        if "Ready"   in fsel: filtered=[c for c in clients if c.get("priority")=="High"]
         elif "Medium" in fsel: filtered=[c for c in clients if c.get("priority")=="Medium"]
-        elif "Needs" in fsel: filtered=[c for c in clients if c.get("priority")=="Low"]
+        elif "Needs"  in fsel: filtered=[c for c in clients if c.get("priority")=="Low"]
         elif "Leaving" in fsel: filtered=[c for c in clients if c.get("churn",0)>50]
-        elif "No SIP" in fsel: filtered=[c for c in clients if "No SIP" in c.get("flags",[])]
+        elif "No SIP"  in fsel: filtered=[c for c in clients if "No SIP" in c.get("flags",[])]
         elif "Nominee" in fsel: filtered=[c for c in clients if "No Nominee" in c.get("flags",[])]
         if sq: filtered=[c for c in filtered if sq.lower() in c.get("name","").lower() or sq.lower() in c.get("goal","").lower()]
         if amin>0 or amax<10000: filtered=[c for c in filtered if amin*1e5<=_num(c.get("portfolio",0))<=amax*1e5]
         rc1,rc2 = st.columns([5,1])
-        with rc1: st.markdown(f"<div style='font-size:11px;color:#6e7681;font-family:JetBrains Mono,monospace;margin-bottom:.75rem'>{len(filtered)} of {len(clients)} records \u00b7 sorted by ML score</div>", unsafe_allow_html=True)
+        with rc1: st.markdown(f"<div style='font-size:11px;color:var(--t3);font-family:\"DM Mono\",monospace;margin-bottom:.75rem'>{len(filtered)} of {len(clients)} records \u00b7 sorted by ML score</div>", unsafe_allow_html=True)
         with rc2:
             excel_data = export_excel(filtered)
             st.download_button(label="\u2193 Export", data=excel_data,
@@ -1009,48 +1072,45 @@ def show_dashboard(clients):
         if "exp_row" not in st.session_state: st.session_state.exp_row = None
         for i,c in enumerate(filtered[:20]):
             sc=c.get("score",0); ch=c.get("churn",0); pr=c.get("priority","Low")
-            fill="#3fb950" if sc>=70 else ("#d29922" if sc>=45 else "#f85149")
-            chcol="#f85149" if ch>60 else ("#d29922" if ch>30 else "#3fb950")
-            cc2="chi" if pr=="High" else ("chm" if pr=="Medium" else "chl")
-            rank="\U0001f947" if i==0 else ("\U0001f948" if i==1 else ("\U0001f949" if i==2 else f"#{i+1}"))
-            tags_h="".join(f'<span class="tag">{f}</span>' for f in c.get("flags",[])[:2])
-            is_exp = st.session_state.exp_row==i
+            fill  = "#3fb950" if sc>=70 else ("#d29922" if sc>=45 else "#f85149")
+            chcol = "#f85149" if ch>60  else ("#d29922" if ch>30  else "#3fb950")
+            cc2   = "chi" if pr=="High" else ("chm" if pr=="Medium" else "chl")
+            rank  = "\U0001f947" if i==0 else ("\U0001f948" if i==1 else ("\U0001f949" if i==2 else f"#{i+1}"))
+            tags_h= "".join(f'<span class="tag">{f}</span>' for f in c.get("flags",[])[:2])
+            is_exp= st.session_state.exp_row==i
             st.markdown(f"""<table class="ptable" style="margin-bottom:0"><tbody>
             <tr class="{'xp' if is_exp else ''}">
               <td class="prank">{rank}</td>
               <td><div class="pname">{c.get("name","\u2014")}</div><div class="psub">{c.get("goal","\u2014")} \u00b7 Age {c.get("age","\u2014")}</div></td>
-              <td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">{_fi(c.get("portfolio",0))}</td>
-              <td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#6e7681">{c.get("tenure","\u2014")}</td>
+              <td style="font-family:'DM Mono',monospace;font-size:12px">{_fi(c.get("portfolio",0))}</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--t3)">{c.get("tenure","\u2014")}</td>
               <td><div class="sbar"><span class="snum" style="color:{fill}">{sc}</span>
                 <span class="strack"><span class="sfill" style="width:{sc}%;background:{fill}"></span></span></div></td>
               <td><span class="chip {cc2}">{pr}</span></td>
-              <td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:{chcol}">{ch}%</td>
+              <td style="font-family:'DM Mono',monospace;font-size:11px;color:{chcol}">{ch}%</td>
               <td style="font-size:11px">{tags_h}</td>
             </tr></tbody></table>""", unsafe_allow_html=True)
             _,bc = st.columns([11,1])
             with bc:
                 if st.button("\u25b2" if is_exp else "\u25bc", key=f"er_{i}"):
                     st.session_state.exp_row = None if is_exp else i; st.rerun()
-                    
             if is_exp:
                 insight = c.get("feature_importance", "No insight available")
-                tag = "🧠 AI Insight" if c.get("ml_powered") else ""
-                act = f"{c.get('name','')} → {insight}"
-            
+                tag     = "🧠 AI Insight" if c.get("ml_powered") else ""
                 st.markdown(f"""<div class="xin" style="margin-bottom:8px">
                   <div class="xlbl">{tag} Strategic Recommendation</div>
-                  <div class="xtxt">{act}</div>
-                  <div style="margin-top:8px;font-size:11px;color:#6e7681;font-family:'JetBrains Mono',monospace">
-                    📅 Since {c.get("tenure","—")} · 📋 Nominee: {c.get("nominee","—")} · 💰 SIP: {_fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "None"}
+                  <div class="xtxt">{c.get('name','')} \u2192 {insight}</div>
+                  <div style="margin-top:8px;font-size:11px;color:var(--t3);font-family:'DM Mono',monospace">
+                    \U0001f4c5 Since {c.get("tenure","\u2014")} \u00b7 \U0001f4cb Nominee: {c.get("nominee","\u2014")} \u00b7 \U0001f4b0 SIP: {_fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "None"}
                   </div>
                 </div>""", unsafe_allow_html=True)
 
-    # TAB 2
+    # TAB 2 ── Smart Next Best Action
     with tab2:
-        top_c = clients[0] if clients else {}
-        risk2 = ", ".join(c.get("name","") for c in at_risk[:3]) or "\u2014"
-        sip2 = ", ".join(c.get("name","") for c in no_sip[:3]) or "\u2014"
-        nom2 = ", ".join(c.get("name","") for c in no_nom[:2]) or "\u2014"
+        top_c  = clients[0] if clients else {}
+        risk2  = ", ".join(c.get("name","") for c in at_risk[:3]) or "\u2014"
+        sip2   = ", ".join(c.get("name","") for c in no_sip[:3])  or "\u2014"
+        nom2   = ", ".join(c.get("name","") for c in no_nom[:2])  or "\u2014"
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
         st.markdown('<div class="mhd"><div class="mic mam">\u26a1</div><div><div class="mtitle">Smart Next Best Action</div><div class="msub">Decision engine \u00b7 Impact scoring \u00b7 Automated outreach templates</div></div></div>', unsafe_allow_html=True)
         tn = top_c.get("name","Top client")
@@ -1090,15 +1150,15 @@ def show_dashboard(clients):
               <div class="abtns"><a class="btn-wa" href="{wl}" target="_blank">Open WhatsApp \u2197</a></div>
             </div>""", unsafe_allow_html=True)
 
-    # TAB 3
+    # TAB 3 ── Event Intelligence
     with tab3:
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
         st.markdown('<div class="mhd"><div class="mic mam">\u2726</div><div><div class="mtitle">Event Intelligence</div><div class="msub">Data-driven event recommendations \u00b7 ROI projections</div></div></div>', unsafe_allow_html=True)
-        hni_n = ", ".join(c.get("name","") for c in hni[:3])
-        senior = [c for c in clients if int(float(c.get("age") or 0))>=55]
-        mid = [c for c in clients if c.get("priority")=="Medium"]
-        mid_n = ", ".join(c.get("name","") for c in mid[:3])
-        senior_n = ", ".join(c.get("name","") for c in senior[:3])
+        hni_n   = ", ".join(c.get("name","") for c in hni[:3])
+        senior  = [c for c in clients if int(float(c.get("age") or 0))>=55]
+        mid     = [c for c in clients if c.get("priority")=="Medium"]
+        mid_n   = ", ".join(c.get("name","") for c in mid[:3])
+        senior_n= ", ".join(c.get("name","") for c in senior[:3])
         evs = [
             ("high impact","#d29922","Conversion Accelerator Workshop",
              f"{len(mid)} mid-funnel clients identified near the decision boundary. Deploy a value-demonstration format targeting {mid_n} who are closest to the high-priority threshold. Regression model suggests 22-31% probability of tier upgrade post-event.",
@@ -1118,14 +1178,14 @@ def show_dashboard(clients):
             m_parts = meta_str.split("\u00b7")
             rows_e += f"""<div class="evcard">
               <div class="evtop"><div class="evtitle">{title}</div>
-                <span class="chip" style="background:{tc}18;color:{tc};border:1px solid {tc}44;font-size:10px;padding:2px 8px;border-radius:10px;font-family:\'JetBrains Mono\',monospace;font-weight:600">{tag}</span></div>
+                <span class="chip" style="background:{tc}18;color:{tc};border:1px solid {tc}44;font-size:10px;padding:2px 8px;border-radius:10px;font-family:'DM Mono',monospace;font-weight:500">{tag}</span></div>
               <div class="evbody">{body}</div>
               <div class="evroi">{roi}</div>
               <div class="evmeta">{"".join(f"<span>{p.strip()}</span>" for p in m_parts)}</div>
             </div>"""
         st.markdown(f'<div class="evgrid">{rows_e}</div>', unsafe_allow_html=True)
 
-    # TAB 4
+    # TAB 4 ── ML Prediction Engine
     with tab4:
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
         st.markdown('<div class="mhd"><div class="mic mpu">\u25c8</div><div><div class="mtitle">ML Prediction Engine</div><div class="msub">Ensemble model \u00b7 Churn prediction \u00b7 Revenue forecasting \u00b7 Confidence intervals</div></div></div>', unsafe_allow_html=True)
@@ -1134,22 +1194,22 @@ def show_dashboard(clients):
         for i,c in enumerate(clients[:15]):
             sc=c.get("score",0); ch=c.get("churn",0); cv=c.get("conv",50)
             dlo,dhi = max(0,sc-3),min(100,sc+3)
-            trend = "Ascending" if sc>=60 else ("Stable" if sc>=45 else "Declining")
-            tcls = "tup" if trend=="Ascending" else ("tdn" if trend=="Declining" else "tsb")
-            conf = random.randint(85,94)
-            pred_rev = round(_num(c.get("portfolio",0))*1.12)
-            chcol = "#f85149" if ch>50 else ("#d29922" if ch>25 else "#3fb950")
-            cvcol = "#3fb950" if cv>60 else ("#d29922" if cv>40 else "#f85149")
-            is_me = st.session_state.ml_exp==i
+            trend   = "Ascending" if sc>=60 else ("Stable" if sc>=45 else "Declining")
+            tcls    = "tup" if trend=="Ascending" else ("tdn" if trend=="Declining" else "tsb")
+            conf    = random.randint(85,94)
+            pred_rev= round(_num(c.get("portfolio",0))*1.12)
+            chcol   = "#f85149" if ch>50 else ("#d29922" if ch>25 else "#3fb950")
+            cvcol   = "#3fb950" if cv>60 else ("#d29922" if cv>40 else "#f85149")
+            is_me   = st.session_state.ml_exp==i
             st.markdown(f"""<div class="mlrow {'mlex' if is_me else ''}">
-              <span style="font-weight:600;font-size:13px">{c.get("name","\u2014")}</span>
-              <span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#3fb950">{dlo}\u2192{dhi}</span>
-              <span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:{chcol}">{ch}%</span>
-              <span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:{cvcol}">{cv}%</span>
-              <span style="font-family:\'JetBrains Mono\',monospace;font-size:12px">\u20b9{pred_rev:,}</span>
+              <span style="font-weight:500;font-size:13px">{c.get("name","\u2014")}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:#3fb950">{dlo}\u2192{dhi}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:{chcol}">{ch}%</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:{cvcol}">{cv}%</span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px">\u20b9{pred_rev:,}</span>
               <span><span class="{tcls}">\u2197 {trend}</span>
                 <span class="cbr" style="margin-left:6px">
-                <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#8b949e">{conf}%</span>
+                <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--t2)">{conf}%</span>
                 <span class="cbar"><span class="cfill" style="width:{conf}%"></span></span></span>
               </span>
             </div>""", unsafe_allow_html=True)
@@ -1159,38 +1219,28 @@ def show_dashboard(clients):
                     st.session_state.ml_exp = None if is_me else i; st.rerun()
             if is_me:
                 feat = c.get("feature_importance", "No insight available")
-            
-                # 👇 Python logic outside
-                tag = ""
-                if c.get("ml_powered"):
-                    tag = '<div style="font-size:10px;color:#3fb950;font-family:JetBrains Mono,monospace">🧠 AI Insight</div>'
-            
-                # 👇 HTML inside
-                st.markdown(f"""
-                <div class="mlxpand">
+                tag  = '<div style="font-size:10px;color:var(--gr);font-family:\'DM Mono\',monospace">🧠 AI Insight</div>' if c.get("ml_powered") else ""
+                st.markdown(f"""<div class="mlxpand">
                   {tag}
-                  <div class="mlfl">⊕ Model feature importance</div>
-                  <div class="mlft">↳ {feat}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-
+                  <div class="mlfl">\u2295 Model feature importance</div>
+                  <div class="mlft">\u21b3 {feat}</div>
+                </div>""", unsafe_allow_html=True)
         if len(clients)>15:
-            st.markdown(f"<div style='text-align:center;padding:1rem;font-size:12px;color:#58a6ff;font-family:JetBrains Mono,monospace'>View all {len(clients)} predictions \u2192</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align:center;padding:1rem;font-size:12px;color:var(--bl);font-family:\"DM Mono\",monospace'>View all {len(clients)} predictions \u2192</div>", unsafe_allow_html=True)
 
-    # TAB 5
+    # TAB 5 ── WhatsApp Drafts
     with tab5:
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
         st.markdown('<div class="mhd"><div class="mic mgr">\U0001f4f1</div><div><div class="mtitle">WhatsApp Drafts</div><div class="msub">Personalised templates \u00b7 Direct send links</div></div></div>', unsafe_allow_html=True)
         names = [c.get("name","") for c in clients if c.get("name")]
-        seln = st.selectbox("Select client", names, label_visibility="collapsed")
-        sel = next((c for c in clients if c.get("name")==seln), None)
+        seln  = st.selectbox("Select client", names, label_visibility="collapsed")
+        sel   = next((c for c in clients if c.get("name")==seln), None)
         if sel:
             sc2=sel.get("score",0); ch2=sel.get("churn",0)
             scc="#3fb950" if sc2>=70 else ("#d29922" if sc2>=45 else "#f85149")
             chc="#f85149" if ch2>50 else "#3fb950"
-            un = st.session_state.get("user_name","Your Advisor")
-            uc = st.session_state.get("user_company","")
+            un  = st.session_state.get("user_name","Your Advisor")
+            uc  = st.session_state.get("user_company","")
             ca,cb = st.columns([1,1])
             with ca:
                 st.markdown(f"""<div class="wprof">
@@ -1204,28 +1254,29 @@ def show_dashboard(clients):
                 mt = st.radio("Type", ["Check-in call","SIP proposal","Portfolio review","Nominee update"], label_visibility="visible")
             with cb:
                 tmpls = {
-                    "Check-in call": f"Dear {sel.get('name','')},\n\nI have been reviewing your portfolio and there are a few developments I would like to walk you through personally.\n\nCould we schedule a quick 20-minute call this week?\n\nWarm regards,\n{un}\n{uc}",
-                    "SIP proposal": f"Dear {sel.get('name','')},\n\nBased on your portfolio of {_fi(sel.get('portfolio',0))}, I have prepared a personalised SIP projection that could significantly grow your wealth.\n\nCan we find 15 minutes to walk through it?\n\nWarm regards,\n{un}\n{uc}",
-                    "Portfolio review": f"Dear {sel.get('name','')},\n\nYour portfolio review is due. I want to ensure your investments are optimally positioned for the year ahead.\n\nWhen works best for a quick call?\n\nWarm regards,\n{un}\n{uc}",
-                    "Nominee update": f"Dear {sel.get('name','')},\n\nAs part of our annual client care review, I noticed your nominee details may need updating. This is critical for your family.\n\nIt takes under 10 minutes. Can I help?\n\nWarm regards,\n{un}\n{uc}",
+                    "Check-in call":    f"Dear {sel.get('name','')},\n\nI have been reviewing your portfolio and there are a few developments I would like to walk you through personally.\n\nCould we schedule a quick 20-minute call this week?\n\nWarm regards,\n{un}\n{uc}",
+                    "SIP proposal":     f"Dear {sel.get('name','')},\n\nBased on your portfolio of {_fi(sel.get('portfolio',0))}, I have prepared a personalised SIP projection that could significantly grow your wealth.\n\nCan we find 15 minutes to walk through it?\n\nWarm regards,\n{un}\n{uc}",
+                    "Portfolio review":  f"Dear {sel.get('name','')},\n\nYour portfolio review is due. I want to ensure your investments are optimally positioned for the year ahead.\n\nWhen works best for a quick call?\n\nWarm regards,\n{un}\n{uc}",
+                    "Nominee update":    f"Dear {sel.get('name','')},\n\nAs part of our annual client care review, I noticed your nominee details may need updating. This is critical for your family.\n\nIt takes under 10 minutes. Can I help?\n\nWarm regards,\n{un}\n{uc}",
                 }
                 edited = st.text_area("Edit before sending", tmpls[mt], height=220, label_visibility="collapsed")
-                ph = sel.get("phone","")
+                ph  = sel.get("phone","")
                 wl2 = get_whatsapp_link(ph, edited) if WA_OK and ph else f"https://wa.me/?text={edited.replace(chr(10),'%0A').replace(' ','%20')}"
                 st.markdown(f'<br><a class="btn-wa" href="{wl2}" target="_blank">\U0001f4f1 Open in WhatsApp \u2197</a>', unsafe_allow_html=True)
 
     # Footer
     st.markdown("<br><hr>", unsafe_allow_html=True)
-    mc = st.session_state.get("merged_count",0)
-    ms2 = f" \u00b7 {mc} duplicates merged" if mc else ""
-    ml_status = " \u00b7 ML powered" if ML_OK else " \u00b7 rule-based scoring"
-    st.markdown(f"<div style='text-align:center;font-size:11px;color:#21262d;font-family:JetBrains Mono,monospace'>AdvisorIQ \u00b7 {len(clients)} clients \u00b7 {_fi(aum)} AUM{ms2}{ml_status}</div>", unsafe_allow_html=True)
+    mc       = st.session_state.get("merged_count",0)
+    ms2      = f" \u00b7 {mc} duplicates merged" if mc else ""
+    ml_status= " \u00b7 ML powered" if ML_OK else " \u00b7 rule-based scoring"
+    st.markdown(f"<div style='text-align:center;font-size:11px;color:var(--t3);font-family:\"DM Mono\",monospace'>AdvisorIQ \u00b7 {len(clients)} clients \u00b7 {_fi(aum)} AUM{ms2}{ml_status}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
+
     with st.sidebar:
         st.markdown(f"**{st.session_state.get('user_name','')}**")
         st.caption(st.session_state.get("user_company",""))
         if st.button("Upload new data"): st.session_state.screen="upload"; st.rerun()
-        if st.button("Settings"): st.session_state.screen="settings"; st.rerun()
+        if st.button("Settings"):        st.session_state.screen="settings"; st.rerun()
         if st.button("Sign out"):
             for k in list(st.session_state.keys()): del st.session_state[k]
             st.rerun()
@@ -1237,7 +1288,7 @@ def main():
         st.session_state.screen = "login"
     screen = st.session_state.screen
 
-    if screen == "login":   show_login();  return
+    if screen == "login":    show_login();    return
     if screen == "settings": show_settings(); return
 
     if screen == "upload":
@@ -1254,12 +1305,12 @@ def main():
         if st.session_state.get("use_demo"):
             with st.spinner("Loading demo data..."):
                 clients = prep_demo()
-
-                clients = predict_batch(clients)
+                if ML_OK:
+                    clients = predict_batch(clients)
             st.session_state.clients = clients
             if DB_OK: db.save_clients(st.session_state.user_id, clients)
-            st.session_state.use_demo = False
-            st.session_state.screen = "dashboard"; st.rerun()
+            st.session_state.use_demo  = False
+            st.session_state.screen    = "dashboard"; st.rerun()
         elif st.session_state.get("use_sheets") and st.session_state.get("sheets_url"):
             with st.spinner("Fetching Google Sheets data..."):
                 from sheets_sync import fetch_sheet_data
@@ -1268,7 +1319,7 @@ def main():
                 st.error(f"Could not fetch sheet: {err}")
                 st.session_state.screen = "upload"; st.rerun()
             else:
-                st.session_state.upload_df = df
+                st.session_state.upload_df  = df
                 st.session_state.use_sheets = False
         if "upload_df" in st.session_state:
             show_mapping(st.session_state.upload_df)
