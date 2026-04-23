@@ -34,12 +34,61 @@ except Exception as e:
 import datetime as _dt
 
 def convert_to_business_language(score):
-    if score > 0.75:
+    if score > 75:
         return "⚠️ High Risk - Needs Attention"
-    elif score > 0.4:
+    elif score > 40:
         return "🟡 Moderate Risk"
     else:
         return "🟢 Safe Customer"
+
+
+# 👇 ADD NEW FUNCTION HERE (DON'T REPLACE ABOVE)
+def generate_client_explanation(c):
+    name = c.get("name", "This client")
+    score = c.get("score", 0)
+    churn = c.get("churn", 0)
+    flags = c.get("flags", [])
+
+    if score >= 70:
+        risk = "high-value and responsive"
+    elif score >= 45:
+        risk = "moderately engaged"
+    else:
+        risk = "low engagement"
+
+    if churn > 60:
+        churn_text = "may stop engaging soon"
+    elif churn > 30:
+        churn_text = "could become inactive"
+    else:
+        churn_text = "is currently stable"
+
+    reasons = []
+    if "No SIP" in flags:
+        reasons.append("no regular investment activity")
+    if "No Nominee" in flags:
+        reasons.append("important details are incomplete")
+    if "High Value" in flags:
+        reasons.append("has a high portfolio value")
+
+    if not reasons:
+        reasons.append("recent activity patterns")
+
+    explanation = f"{name} is {risk} and {churn_text}. This is mainly because of {', '.join(reasons)}."
+
+    return explanation
+
+def get_next_action(c):
+    if c.get("churn", 0) > 60:
+        return "📞 Call immediately"
+    elif "No SIP" in c.get("flags", []):
+        return "💰 Suggest SIP plan"
+    elif c.get("score", 0) > 70:
+        return "📲 Send personalized message"
+    else:
+        return "📩 Regular follow-up"
+
+
 
 def fmt_inr(v):
     try: n=float(str(v).replace(",","").replace("\u20b9","") or 0)
@@ -993,7 +1042,9 @@ def show_dashboard(clients):
                 
                 # 👉 convert to business language
                 label = convert_to_business_language(sc)
-                
+
+                explanation = generate_client_explanation(c)
+
                 fill = "#3fb950" if sc >= 70 else ("#d29922" if sc >= 45 else "#f85149")
                 cc2 = "chi" if pr == "High" else ("chm" if pr == "Medium" else "chl")
                 
@@ -1016,7 +1067,7 @@ def show_dashboard(clients):
             st.markdown(f"""<div class="kdet">
               <div class="kdet-h"><span class="kdet-t">{dlbl} <span style="font-size:12px;color:var(--t2);font-weight:400">({len(dlst)} clients)</span></span></div>
               <div style="overflow-x:auto"><table class="ptable" style="margin:0">
-              <thead><tr><th></th><th>Client</th><th>Portfolio</th><th>Health score</th><th>Status</th><th>Alerts</th></tr></thead>
+              <thead><tr><th></th><th>Client</th><th>Portfolio</th><th>Status</th><th>Priority</th><th>Insight</th><th>Alerts</th></tr></thead>
               <tbody>{rd}</tbody></table></div></div>""", unsafe_allow_html=True)
 
     st.markdown('<div style="height:1.5rem"></div>', unsafe_allow_html=True)
