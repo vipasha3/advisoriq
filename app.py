@@ -631,22 +631,12 @@ def export_excel(clients):
     buf.seek(0)
     return buf.getvalue()
 
-# ── Theme toggle button (floating) ────────────────────────────────────────────
-def show_theme_toggle():
-    theme = st.session_state.get("theme", "dark")
-    icon  = "☀️" if theme == "dark" else "🌙"
-    label = "Light mode" if theme == "dark" else "Dark mode"
-    # Render a small sidebar button instead of floating (Streamlit-safe)
-    with st.sidebar:
-        if st.button(f"{icon}  {label}", key="theme_btn_sidebar"):
-            st.session_state.theme = "light" if theme == "dark" else "dark"
-            st.rerun()
 
 # ── NAV ───────────────────────────────────────────────────────────────────────
 def show_nav():
     # Inject CSS first
     st.markdown(get_theme_css(), unsafe_allow_html=True)
-    show_theme_toggle()
+    
 
     user    = st.session_state.get("user_name","")
     company = st.session_state.get("user_company","")
@@ -655,26 +645,34 @@ def show_nav():
     rl = "Owner" if role=="owner" else "Advisor"
     plan_colors = {"free":"#6e7681","starter":"#58a6ff","growth":"#3fb950","firm":"#d29922"}
     pc = plan_colors.get(plan,"#6e7681")
+    theme = st.session_state.get("theme", "dark")
+    icon  = "☀️" if theme == "dark" else "🌙"
+
     st.markdown(f"""<div class="nav">
       <div class="nav-logo">
-        <div class="nav-icon">\u26a1</div>
+        <div class="nav-icon">⚡</div>
         <span class="nav-brand">Advisor<em>IQ</em></span>
       </div>
       <div class="nav-right">
-        <span class="nav-user">{user} \u00b7 {company}</span>
+        <span class="nav-user">{user} · {company}</span>
         <span class="nav-role">{rl}</span>
-        <span style="font-size:11px;padding:2px 8px;border-radius:12px;background:{pc}18;color:{pc};border:1px solid {pc}44;font-family:'DM Mono',monospace;font-weight:500">{plan.upper()}</span>
+        <span style="font-size:11px;padding:2px 8px;border-radius:12px;background:{pc}18;color:{pc};border:1px solid {pc}44;font-family:'JetBrains Mono',monospace;font-weight:500">{plan.upper()}</span>
       </div>
     </div>""", unsafe_allow_html=True)
-    c1,c2,c3,c4 = st.columns([6,1,1,1])
+
+    c1,c2,c3,c4,c5 = st.columns([6,1,1,1,1])
     with c2:
-        if st.button("\u2b06 Upload", key="nav_up"):
+        if st.button(icon, key="nav_theme", help="Toggle light/dark mode"):
+            st.session_state.theme = "light" if theme == "dark" else "dark"
+            st.rerun()
+    with c3:
+        if st.button("⬆ Upload", key="nav_up"):
             st.session_state.pop("kpi_open", None)
             st.session_state.screen = "upload"; st.rerun()
-    with c3:
-        if st.button("\u2699 Settings", key="nav_set"):
-            st.session_state.screen = "settings"; st.rerun()
     with c4:
+        if st.button("⚙ Settings", key="nav_set"):
+            st.session_state.screen = "settings"; st.rerun()
+    with c5:
         if st.button("Sign out", key="nav_so"):
             for k in list(st.session_state.keys()): del st.session_state[k]
             st.rerun()
@@ -682,7 +680,7 @@ def show_nav():
 # ── LOGIN ─────────────────────────────────────────────────────────────────────
 def show_login():
     st.markdown(get_theme_css(), unsafe_allow_html=True)
-    show_theme_toggle()
+    
     _,col,_ = st.columns([1,1,1])
     with col:
         st.markdown("""<div style="text-align:center;margin-top:3rem;margin-bottom:2rem">
