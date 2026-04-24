@@ -1203,32 +1203,37 @@ def show_dashboard(clients):
     # TAB 2 ── Smart Next Best Action
     with tab2:
         top_c  = clients[0] if clients else {}
-        risk2  = ", ".join(c.get("name","") for c in at_risk[:3]) or "\u2014"
-        sip2   = ", ".join(c.get("name","") for c in no_sip[:3])  or "\u2014"
-        nom2   = ", ".join(c.get("name","") for c in no_nom[:2])  or "\u2014"
+        risk_all  = ", ".join(c.get("name","") for c in at_risk) or "—"
+        sip_all   = ", ".join(c.get("name","") for c in no_sip)  or "—"
+        nom_all   = ", ".join(c.get("name","") for c in no_nom)  or "—"
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
         st.markdown('<div class="mhd"><div class="mic mam">\u26a1</div><div><div class="mtitle">Smart Next Best Action</div><div class="msub">What to do \u00b7 Expected result \u00b7 Automated outreach templates</div></div></div>', unsafe_allow_html=True)
         tn = top_c.get("name","Top client")
+        tn_first = tn.split()[0] if tn else "there"
+        top_port = _fi(_num(top_c.get("portfolio", 0)))
+        top_score = top_c.get("score", 0)
+        top_conv = top_c.get("conv", 60)
+
         actions_data = [
             ("HIGH","bhi","WhatsApp + Follow-up call",
-             f"{tn} \u2014 Deploy personalised value proposition",
-             f"Gradient boosting classifier places {tn} at health score {top_c.get('score',0)}/100. Feature importance analysis shows portfolio sensitivity at {round(_num(top_c.get('portfolio',0))/(max(aum,1)/max(len(clients),1))*100,0):.0f}% of cohort mean. A targeted intervention could shift classification to high-priority with ~{top_c.get('conv',60)}% confidence.",
+             f"{tn} \u2014 Personal follow-up recommended",
+             f"{tn} has a strong portfolio of {top_port} and scores {top_score}/100 on our priority scale. They are likely ready for a meaningful conversation. A personal call now \u2014 not a sales pitch \u2014 could open the door to deeper engagement. Confidence of a positive response: ~{top_conv}%.",
              f"+{_fi(_num(top_c.get('portfolio',0))*0.05)} expected revenue impact",
-             f"Hi {tn.split()[0] if tn else 'there'}! We have prepared something based on your profile. Can I share the details?",
+             f"Hi {tn_first}! I have been reviewing your portfolio and have something useful to share. Can we connect for 15 minutes this week?",
              top_c.get("phone","")),
             ("HIGH","bhi","WhatsApp + Email Sequence",
              f"{len(at_risk)} clients \u2014 Urgent churn prevention",
-             f"System identified {risk2} as high-risk for advisor switch within 60 days. Inactivity beyond 6 months triples withdrawal probability. A portfolio health-check call \u2014 not a sales call \u2014 is the highest-impact intervention at this stage.",
+             f"These {len(at_risk)} clients have gone quiet for 6+ months and may switch to another advisor soon: {risk_all}. The best move is a friendly check-in call \u2014 not a sales call. Just showing you care goes a long way in retaining them.",
              f"~{_fi(risk_aum*0.12)} recoverable if re-engaged this month",
              "Hi! I wanted to personally check in \u2014 it has been a while and I want to make sure your portfolio is well positioned. Can we connect briefly?",""),
             ("GROWTH","bgr","SIP upsell sequence",
              f"{len(no_sip)} clients \u2014 SIP conversion drive",
-             f"{sip2} hold significant portfolio but have no systematic investment plan. Showing a Rs 5,000/month compound projection closing at Rs 30L over 15 years converts 60%+ of these profiles in one sitting.",
+             f"These clients have good portfolios but no monthly SIP running: {sip_all}. A simple projection showing how even \u20b95,000/month grows over 15 years is enough to convert most of them in one conversation.",
              f"+{_fi(sum(_num(c.get('portfolio',0)) for c in no_sip)*0.03)} annual SIP commission potential",
              "Hi! I have prepared a personalised growth projection based on your portfolio. The numbers are quite compelling \u2014 can I share them with you?",""),
             ("COMPLIANCE","bbl","Compliance outreach",
              f"{len(no_nom)} clients \u2014 Nominee form drive",
-             f"{nom2} have not filed nominee forms \u2014 legal risk for families, compliance exposure for your practice. A 10-minute call positions you as the advisor who cares beyond commissions.",
+             f"These {len(no_nom)} clients have not filed nominee forms yet: {nom_all}. This creates legal risk for their families. A quick 10-minute call to help them sort this out builds strong trust and shows you care beyond just investments.",
              "Compliance risk mitigated \u00b7 High trust impact",
              "Hi! As part of our annual client care review, I noticed your nominee details may need updating. This protects your family \u2014 can we sort this quickly?",""),
         ]
