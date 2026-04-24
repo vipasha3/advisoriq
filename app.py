@@ -1065,27 +1065,41 @@ def show_dashboard(clients):
                 fill = "#3fb950" if sc >= 70 else ("#d29922" if sc >= 45 else "#f85149")
                 cc2 = "chi" if pr == "High" else ("chm" if pr == "Medium" else "chl")
                 
-                rd += f"""<tr><td class="prank">#{i+1}</td>
-                  <td><div class="pname">{c.get("name","\u2014")}</div>
-                  <div class="psub">{c.get("goal","\u2014")} \u00b7 Age {c.get("age","\u2014")}</div></td>
-                  <td style="font-family:'DM Mono',monospace;font-size:12px">{_fi(c.get("portfolio",0))}</td>
+                rd += f"""<tr>
+                <td class="prank">#{i+1}</td>
                 
-                  
-                  <td>
-                    <div class="sbar">
-                      <span class="snum" style="color:{fill}">{label}</span>
-                    </div>
-                  </td>
+                <td>
+                  <div class="pname">{c.get("name","—")}</div>
+                  <div class="psub">{c.get("goal","—")} · Age {c.get("age","—")}</div>
+                </td>
                 
-                  <td><span class="chip {cc2}">{pr}</span></td>
-                  
-                  <td style="font-size:12px">{action}</td>
+                <td style="font-family:'DM Mono',monospace;font-size:12px">
+                  {_fi(c.get("portfolio",0))}
+                </td>
                 
-                  
-                  <td style="font-size:12px;color:var(--t2)">{explanation}</td>
-                  <td style="font-size:11px;font-family:'DM Mono',monospace;color:var(--t2)">
+                <td>
+                  <div class="sbar">
+                    <span class="snum" style="color:{fill}">{label}</span>
+                  </div>
+                </td>
+                
+                <td>
+                  <span class="chip {cc2}">{pr}</span>
+                </td>
+                
+                <td style="font-size:12px">
+                  {action}
+                </td>
+                
+                <td style="font-size:12px;color:var(--t2)">
+                  {explanation}
+                </td>
+                
+                <td style="font-size:11px;color:var(--t2)">
                   {" · ".join(c.get("flags",[])[:2]) or "—"}
-                  </td></tr>"""
+                </td>
+                
+                </tr>"""
             st.markdown(f"""<div class="kdet">
               <div class="kdet-h"><span class="kdet-t">{dlbl} <span style="font-size:12px;color:var(--t2);font-weight:400">({len(dlst)} clients)</span></span></div>
               <div style="overflow-x:auto"><table class="ptable" style="margin:0">
