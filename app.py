@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-st.write("DEBUG VERSION 2")
+
 
 # ── Theme init ────────────────────────────────────────────────────────────────
 if "theme" not in st.session_state:
