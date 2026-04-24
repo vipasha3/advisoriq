@@ -1065,7 +1065,7 @@ def show_dashboard(clients):
                 fill = "#3fb950" if sc >= 70 else ("#d29922" if sc >= 45 else "#f85149")
                 cc2 = "chi" if pr == "High" else ("chm" if pr == "Medium" else "chl")
                 
-                rd += f"""<tr>
+                row_html = f"""<tr>
                 <td class="prank">#{i+1}</td>
                 
                 <td>
@@ -1100,6 +1100,8 @@ def show_dashboard(clients):
                 </td>
                 
                 </tr>"""
+                
+                rd += row_html
             st.markdown(f"""<div class="kdet">
               <div class="kdet-h"><span class="kdet-t">{dlbl} <span style="font-size:12px;color:var(--t2);font-weight:400">({len(dlst)} clients)</span></span></div>
               <div style="overflow-x:auto"><table class="ptable" style="margin:0">
