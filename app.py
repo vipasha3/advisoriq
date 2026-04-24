@@ -690,12 +690,12 @@ def show_login():
             st.rerun()
 
     if st.button("Sign in →"):
-    if row:  # successful login
-        import secrets
-        token = secrets.token_urlsafe(32)
-        db.save_session_token(row["id"], token)
-        st.query_params["token"] = token
-        # ... rest of login code
+        if row:  # successful login
+            import secrets
+            token = secrets.token_urlsafe(32)
+            db.save_session_token(row["id"], token)
+            st.query_params["token"] = token
+            # ... rest of login code
     
     _,col,_ = st.columns([1,1,1])
     with col:
