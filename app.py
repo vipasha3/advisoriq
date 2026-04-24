@@ -4,6 +4,7 @@ import datetime, random, json
 import plotly.graph_objects as go
 import urllib.parse
 from io import BytesIO
+import secrets
 
 # ── Page config (MUST be first Streamlit call) ────────────────────────────────
 st.set_page_config(
