@@ -726,8 +726,8 @@ def show_login():
             rc = st.text_input("Company",    placeholder="Patel Wealth Advisory",   key="r_c")
             ru = st.text_input("Username",   placeholder="ramesh.patel",            key="r_u")
             rp = st.text_input("Password",   type="password", placeholder="Min 6 characters", key="r_p")
-            rr = st.selectbox("Role", ["Owner / Director","Senior Advisor","Advisor","Team Member"], key="r_r")
-            rm = {"Owner / Director":"owner","Senior Advisor":"advisor","Advisor":"advisor","Team Member":"staff"}
+            rr = st.selectbox("I am a", ["Financial Advisor / MFD","Business Owner / Director"], key="r_r")
+            rm = {"Financial Advisor / MFD":"advisor","Business Owner / Director":"owner"}
             st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
             if st.button("Create account \u2192", use_container_width=True, key="r_b"):
                 if all([rn,rc,ru,rp]):
@@ -934,24 +934,37 @@ def show_settings():
             is_active = plan == pid
             with col:
                 border = "border:1px solid var(--gr)" if is_active else "border:1px solid var(--bd)"
-                st.markdown(f"""<div style="background:var(--s1);{border};border-radius:10px;padding:1.25rem;text-align:center;margin-bottom:1rem">
-                  <div style="font-size:13px;font-weight:500;margin-bottom:6px">{pname}</div>
-                  <div style="font-size:1.4rem;font-weight:600;font-family:'DM Mono',monospace;color:var(--tx);margin-bottom:4px">{pprice}</div>
-                  <div style="font-size:11px;color:var(--t2);margin-bottom:.875rem">{pclients}</div>
-                  <div style="font-size:11px;color:var(--t2)">WhatsApp: {pwa}</div>
-                  <div style="font-size:11px;color:var(--t2)">API: {papi}</div>
-                  {"<div style='margin-top:.875rem;font-size:11px;color:var(--gr);font-family:DM Mono,monospace;font-weight:500'>CURRENT PLAN</div>" if is_active else ""}
-                </div>""", unsafe_allow_html=True)
+                current_badge = "<div style='margin-top:.875rem;font-size:11px;color:var(--gr);font-family:JetBrains Mono,monospace;font-weight:500'>CURRENT PLAN</div>" if is_active else ""
+                st.markdown(
+                    "<div style='background:var(--s1);" + border + ";border-radius:10px;padding:1.25rem;text-align:center;margin-bottom:1rem'>"
+                    "<div style='font-size:13px;font-weight:500;margin-bottom:6px'>" + pname + "</div>"
+                    "<div style='font-size:1.4rem;font-weight:600;font-family:JetBrains Mono,monospace;color:var(--tx);margin-bottom:4px'>" + pprice + "</div>"
+                    "<div style='font-size:11px;color:var(--t2);margin-bottom:.875rem'>" + pclients + "</div>"
+                    "<div style='font-size:11px;color:var(--t2)'>WhatsApp: " + pwa + "</div>"
+                    "<div style='font-size:11px;color:var(--t2)'>API: " + papi + "</div>"
+                    + current_badge +
+                    "</div>",
+                    unsafe_allow_html=True
+                )
                 if not is_active and pid != "free":
                     if st.button(f"Upgrade \u2192 {pname}", key=f"up_{pid}", use_container_width=True):
                         st.info(f"Razorpay integration: set RAZORPAY_KEY_ID in .env to enable payments for {pname} plan.")
 
     with t3:
         st.markdown("""<div class="mhd" style="margin-top:.5rem">
-          <div class="mic mpu">\u25c8</div>
-          <div><div class="mtitle">ML Model Information</div>
-          <div class="msub">GradientBoosting models for priority scoring and churn prediction</div></div>
+          <div class="mic mpu">◈</div>
+          <div><div class="mtitle">Scoring Model Info</div>
+          <div class="msub">How client health scores and leaving risk are calculated</div></div>
         </div>""", unsafe_allow_html=True)
+        st.markdown("""
+        <div style='background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:1.25rem;line-height:1.8;font-size:13px;color:var(--t2)'>
+        <div style='font-weight:600;color:var(--tx);margin-bottom:.75rem'>How scores are calculated</div>
+        <b style='color:var(--tx)'>Health Score (0–100)</b> — based on portfolio size, monthly SIP, how recently you contacted them, how long they have been your client, and whether nominee is filed.<br><br>
+        <b style='color:var(--tx)'>Leaving Risk (%)</b> — based on months since last contact, no SIP, missing nominee, and short client tenure. Higher = more likely to switch advisor.<br><br>
+        <b style='color:var(--tx)'>Priority</b> — High (score 70+), Medium (45–69), Low (below 45).<br><br>
+        <div style='font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace;margin-top:.5rem'>Rule-based scoring · No external model needed · Updates instantly on upload</div>
+        </div>
+        """, unsafe_allow_html=True)
         if ML_OK:
             meta = get_model_meta()
             if meta:
