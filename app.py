@@ -1188,9 +1188,23 @@ def show_dashboard(clients):
             unsafe_allow_html=True
         )
 
+        # ── One single table for header + all rows ────────────────────────────
         if "exp_row" not in st.session_state: st.session_state.exp_row = None
 
-        # ── Client rows ───────────────────────────────────────────────────────
+        all_rows_html = (
+            "<table class='ptable' style='width:100%;margin-bottom:0'>"
+            "<thead><tr>"
+            "<th style='width:44px'></th>"
+            "<th>Client Name</th>"
+            "<th>Portfolio Value</th>"
+            "<th>Client Since</th>"
+            "<th>Health Score</th>"
+            "<th>Priority</th>"
+            "<th>Leaving Risk</th>"
+            "<th>Alerts</th>"
+            "</tr></thead><tbody>"
+        )
+
         for i,c in enumerate(filtered[:20]):
             sc    = c.get("score", 0)
             ch    = c.get("churn", 0)
@@ -1200,11 +1214,9 @@ def show_dashboard(clients):
             cc2   = "chi" if pr=="High" else ("chm" if pr=="Medium" else "chl")
             rank  = "\U0001f947" if i==0 else ("\U0001f948" if i==1 else ("\U0001f949" if i==2 else "#"+str(i+1)))
             tags_h= "".join('<span class="tag">'+f+'</span>' for f in c.get("flags",[])[:2])
-            is_exp= st.session_state.exp_row == i
 
-            row_html = (
-                "<table class='ptable' style='margin-bottom:0;width:100%'><tbody>"
-                "<tr class='" + ("xp" if is_exp else "") + "'>"
+            all_rows_html += (
+                "<tr>"
                 "<td class='prank'>" + rank + "</td>"
                 "<td>"
                   "<div class='pname'>" + str(c.get("name","—")) + "</div>"
@@ -1219,29 +1231,29 @@ def show_dashboard(clients):
                 "<td><span class='chip " + cc2 + "'>" + pr + "</span></td>"
                 "<td style='font-family:DM Mono,monospace;font-size:11px;color:" + chcol + "'>" + str(ch) + "%</td>"
                 "<td style='font-size:11px'>" + tags_h + "</td>"
-                "<td></td>"
-                "</tr></tbody></table>"
+                "</tr>"
             )
-            st.markdown(row_html, unsafe_allow_html=True)
 
+        all_rows_html += "</tbody></table>"
+        st.markdown(all_rows_html, unsafe_allow_html=True)
+
+        # ── Expand buttons (separate, below table) ────────────────────────────
+        for i,c in enumerate(filtered[:20]):
+            is_exp = st.session_state.exp_row == i
             _,bc = st.columns([11,1])
             with bc:
                 if st.button("\u25b2" if is_exp else "\u25bc", key=f"er_{i}"):
                     st.session_state.exp_row = None if is_exp else i; st.rerun()
-
             if is_exp:
                 insight = c.get("feature_importance", "No insight available")
                 sip_val = _fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "Not started"
-                nom_val = str(c.get("nominee","—"))
-                ten_val = str(c.get("tenure","—"))
-                name_val= str(c.get("name",""))
                 st.markdown(
                     "<div class='xin' style='margin-bottom:8px'>"
                     "<div class='xlbl'>\U0001f4a1 What this means</div>"
-                    "<div class='xtxt'>" + name_val + " \u2192 " + insight + "</div>"
+                    "<div class='xtxt'>" + str(c.get("name","")) + " \u2192 " + insight + "</div>"
                     "<div style='margin-top:8px;font-size:11px;color:var(--t3);font-family:DM Mono,monospace'>"
-                    "\U0001f4c5 Client since " + ten_val +
-                    " \u00b7 \U0001f4cb Nominee filed: " + nom_val +
+                    "\U0001f4c5 Client since " + str(c.get("tenure","—")) +
+                    " \u00b7 \U0001f4cb Nominee filed: " + str(c.get("nominee","—")) +
                     " \u00b7 \U0001f4b0 Monthly SIP: " + sip_val +
                     "</div></div>",
                     unsafe_allow_html=True
