@@ -688,6 +688,14 @@ def show_login():
         if st.button(icon, key="login_theme"):
             st.session_state.theme = "light" if theme == "dark" else "dark"
             st.rerun()
+
+    if st.button("Sign in →"):
+    if row:  # successful login
+        import secrets
+        token = secrets.token_urlsafe(32)
+        db.save_session_token(row["id"], token)
+        st.query_params["token"] = token
+        # ... rest of login code
     
     _,col,_ = st.columns([1,1,1])
     with col:
@@ -1551,6 +1559,21 @@ def main():
         clients = st.session_state.get("clients", [])
         if not clients: st.session_state.screen = "upload"; st.rerun(); return
         show_dashboard(clients); return
+
+    # Check saved token in query params
+    params = st.query_params
+    if "token" in params and st.session_state.get("screen") == "login":
+        row = db.get_user_by_token(params["token"])
+        if row:
+            st.session_state.user_id      = row["id"]
+            st.session_state.user_name    = row["full_name"]
+            st.session_state.user_company = row["company"]
+            st.session_state.user_role    = row["role"]
+            st.session_state.user_plan    = row.get("plan","free")
+            saved = db.load_clients(row["id"])
+            if saved: st.session_state.clients = saved
+            st.session_state.screen = "dashboard"
+            st.rerun()
 
 if __name__ == "__main__":
     main()
