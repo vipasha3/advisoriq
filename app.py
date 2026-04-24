@@ -1048,68 +1048,60 @@ def show_dashboard(clients):
             "ksip":  ("Revenue gap \u2014 no SIP despite portfolio", no_sip),
             "knom":  ("Paperwork due \u2014 nominee missing", no_nom),
         }
+        if active:
+        dmap = {
+            "kaum":  ("Total AUM breakdown", clients),
+            "khigh": ("Ready to act \u2014 call these first", high),
+            "krisk": ("Leaving risk \u2014 contact urgently", at_risk),
+            "ksip":  ("Revenue gap \u2014 no SIP despite portfolio", no_sip),
+            "knom":  ("Paperwork due \u2014 nominee missing", no_nom),
+        }
         if active in dmap:
             dlbl, dlst = dmap[active]
-            rd = ""
-            for i,c in enumerate(dlst[:10]):
+            rows_html = []
+            for i, c in enumerate(dlst[:10]):
                 sc = c.get("score", 0)
                 pr = c.get("priority", "Low")
-                
-                # 👉 convert to business language
                 label = convert_to_business_language(sc)
-
                 explanation = generate_client_explanation(c)
-
                 action = get_next_action(c)
-
                 fill = "#3fb950" if sc >= 70 else ("#d29922" if sc >= 45 else "#f85149")
                 cc2 = "chi" if pr == "High" else ("chm" if pr == "Medium" else "chl")
-                
-                row_html = f"""<tr>
-                <td class="prank">#{i+1}</td>
-                
-                <td>
-                  <div class="pname">{c.get("name","—")}</div>
-                  <div class="psub">{c.get("goal","—")} · Age {c.get("age","—")}</div>
-                </td>
-                
-                <td style="font-family:'DM Mono',monospace;font-size:12px">
-                  {_fi(c.get("portfolio",0))}
-                </td>
-                
-                <td>
-                  <div class="sbar">
-                    <span class="snum" style="color:{fill}">{label}</span>
-                  </div>
-                </td>
-                
-                <td>
-                  <span class="chip {cc2}">{pr}</span>
-                </td>
-                
-                <td style="font-size:12px">
-                  {action}
-                </td>
-                
-                <td style="font-size:12px;color:var(--t2)">
-                  {explanation}
-                </td>
-                
-                <td style="font-size:11px;color:var(--t2)">
-                  {" · ".join(c.get("flags",[])[:2]) or "—"}
-                </td>
-                
-                </tr>"""
-                
-                rd += row_html
-            st.markdown(f"""<div class="kdet">
-              <div class="kdet-h"><span class="kdet-t">{dlbl} <span style="font-size:12px;color:var(--t2);font-weight:400">({len(dlst)} clients)</span></span></div>
-              <div style="overflow-x:auto"><table class="ptable" style="margin:0">
-              <thead><tr><th></th><th>Client</th><th>Portfolio</th><th>Status</th><th>Priority</th><th>Next Action</th><th>Insight</th><th>Alerts</th></tr></thead>
-              <tbody>{rd}</tbody></table></div></div>""", unsafe_allow_html=True)
+                row = (
+                    "<tr>"
+                    "<td class='prank'>#" + str(i+1) + "</td>"
+                    "<td>"
+                      "<div class='pname'>" + str(c.get("name","—")) + "</div>"
+                      "<div class='psub'>" + str(c.get("goal","—")) + " · Age " + str(c.get("age","—")) + "</div>"
+                    "</td>"
+                    "<td style=\"font-family:'DM Mono',monospace;font-size:12px\">" + _fi(c.get("portfolio",0)) + "</td>"
+                    "<td><div class='sbar'>"
+                      "<span class='snum' style='color:" + fill + "'>" + label + "</span>"
+                    "</div></td>"
+                    "<td><span class='chip " + cc2 + "'>" + pr + "</span></td>"
+                    "<td style='font-size:12px'>" + action + "</td>"
+                    "<td style='font-size:12px;color:var(--t2)'>" + explanation + "</td>"
+                    "<td style='font-size:11px;color:var(--t2)'>" + (" · ".join(c.get("flags",[])[:2]) or "—") + "</td>"
+                    "</tr>"
+                )
+                rows_html.append(row)
+
+            table_html = (
+                "<div class='kdet'>"
+                "<div class='kdet-h'><span class='kdet-t'>" + dlbl +
+                " <span style='font-size:12px;color:var(--t2);font-weight:400'>(" + str(len(dlst)) + " clients)</span></span></div>"
+                "<div style='overflow-x:auto'><table class='ptable' style='margin:0'>"
+                "<thead><tr>"
+                "<th></th><th>Client</th><th>Portfolio</th><th>Status</th>"
+                "<th>Priority</th><th>Next Action</th><th>Insight</th><th>Alerts</th>"
+                "</tr></thead>"
+                "<tbody>" + "".join(rows_html) + "</tbody>"
+                "</table></div></div>"
+            )
+            st.markdown(table_html, unsafe_allow_html=True)
 
     st.markdown('<div style="height:1.5rem"></div>', unsafe_allow_html=True)
-
+    
     # ── Charts ────────────────────────────────────────────────────────────────
     PC = get_pc()
     gc1,gc2,gc3 = st.columns(3)
