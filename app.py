@@ -1378,13 +1378,51 @@ def show_dashboard(clients):
                 if st.button("\u25b2" if is_me else "\u25bc", key=f"me_{i}"):
                     st.session_state.ml_exp = None if is_me else i; st.rerun()
             if is_me:
-                feat = c.get("feature_importance", "No insight available")
-                tag  = '<div style="font-size:10px;color:var(--gr);font-family:\'DM Mono\',monospace">🧠 AI Insight</div>' if c.get("ml_powered") else ""
-                st.markdown(f"""<div class="mlxpand">
-                  {tag}
-                  <div class="mlfl">\u2295 Model feature importance</div>
-                  <div class="mlft">\u21b3 {feat}</div>
-                </div>""", unsafe_allow_html=True)
+                # Generate meaningful insight from client data
+                sc_c  = c.get("score", 0)
+                ch_c  = c.get("churn", 0)
+                sip_c = _num(c.get("sip", 0))
+                p_c   = _num(c.get("portfolio", 0))
+                nom_c = str(c.get("nominee","")).lower().strip()
+                ma_c  = _mago2(c.get("lastContact",""))
+                flags_c = c.get("flags", [])
+
+                reasons = []
+                if p_c > 5e6:
+                    reasons.append(f"large portfolio of {_fi(p_c)} is the biggest positive signal")
+                elif p_c > 1e6:
+                    reasons.append(f"solid portfolio of {_fi(p_c)} contributes positively")
+                if sip_c > 10000:
+                    reasons.append(f"active SIP of {_fi(sip_c)}/month shows strong commitment")
+                elif sip_c > 0:
+                    reasons.append(f"has a SIP of {_fi(sip_c)}/month")
+                elif p_c > 5e5:
+                    reasons.append("no SIP despite having a portfolio — biggest gap to fix")
+                if ma_c < 3:
+                    reasons.append("contacted recently — relationship is warm")
+                elif ma_c > 12:
+                    reasons.append(f"not contacted in {int(ma_c)} months — urgent re-engagement needed")
+                elif ma_c > 6:
+                    reasons.append(f"last contact was {int(ma_c)} months ago — follow-up overdue")
+                if nom_c == "no":
+                    reasons.append("nominee not filed — compliance gap pulling score down")
+                if ch_c > 60:
+                    reasons.append("high leaving risk — immediate action recommended")
+                elif ch_c > 30:
+                    reasons.append("moderate leaving risk — keep engagement consistent")
+
+                if not reasons:
+                    reasons.append("client profile appears stable with no major red flags")
+
+                feat = ". ".join(reasons[:3]).capitalize() + "."
+
+                st.markdown(
+                    "<div class='mlxpand'>"
+                    "<div class='mlfl'>💡 Why this score</div>"
+                    "<div class='mlft'>↳ " + feat + "</div>"
+                    "</div>",
+                    unsafe_allow_html=True
+                )
         if len(clients)>15:
             st.markdown(f"<div style='text-align:center;padding:1rem;font-size:12px;color:var(--bl);font-family:\"DM Mono\",monospace'>View all {len(clients)} predictions \u2192</div>", unsafe_allow_html=True)
 
