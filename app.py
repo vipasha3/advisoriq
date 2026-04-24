@@ -1251,27 +1251,32 @@ def show_dashboard(clients):
             </div>""", unsafe_allow_html=True)
 
     # TAB 3 ── Event Intelligence
+    # TAB 3 ── Event Intelligence
     with tab3:
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="mhd"><div class="mic mam">\u2726</div><div><div class="mtitle">Event Intelligence</div><div class="msub">Data-driven event recommendations \u00b7 ROI projections</div></div></div>', unsafe_allow_html=True)
-        hni_n   = ", ".join(c.get("name","") for c in hni[:3])
-        senior  = [c for c in clients if int(float(c.get("age") or 0))>=55]
-        mid     = [c for c in clients if c.get("priority")=="Medium"]
-        mid_n   = ", ".join(c.get("name","") for c in mid[:3])
-        senior_n= ", ".join(c.get("name","") for c in senior[:3])
+        st.markdown('<div class="mhd"><div class="mic mam">\u2726</div><div><div class="mtitle">Event Intelligence</div><div class="msub">Event ideas based on your client data \u00b7 Expected returns</div></div></div>', unsafe_allow_html=True)
+        hni_n    = ", ".join(c.get("name","") for c in hni) or "—"
+        senior   = [c for c in clients if int(float(c.get("age") or 0)) >= 55]
+        mid      = [c for c in clients if c.get("priority") == "Medium"]
+        mid_n    = ", ".join(c.get("name","") for c in mid) or "—"
+        senior_n = ", ".join(c.get("name","") for c in senior) or "—"
+        mid_aum  = _fi(sum(_num(c.get("portfolio",0)) for c in mid))
+        hni_aum  = _fi(sum(_num(c.get("portfolio",0)) for c in hni))
+        hni_pct  = round(sum(_num(c.get("portfolio",0)) for c in hni) / max(aum,1) * 100, 1)
+
         evs = [
-            ("high impact","#d29922","Conversion Accelerator Workshop",
-             f"{len(mid)} mid-funnel clients identified near the decision boundary. Deploy a value-demonstration format targeting {mid_n} who are closest to the high-priority threshold. Regression model suggests 22-31% probability of tier upgrade post-event.",
-             f"ROI: ~{_fi(sum(_num(c.get('portfolio',0)) for c in mid)*0.08)} uplift",
-             f"Workshop \u00b7 {len(mid)} mid-funnel \u00b7 This month"),
-            ("medium impact","#58a6ff","HNI Portfolio Deep-Dive",
-             f"Your top segment contributes {round(sum(_num(c.get('portfolio',0)) for c in hni)/max(aum,1)*100,1)}% of total AUM across {len(hni)} accounts ({_fi(sum(_num(c.get('portfolio',0)) for c in hni))}). An industry-specific event drives 2.1x engagement vs generic format. Targets: {hni_n}.",
+            ("high impact","#d29922","Client Conversion Workshop",
+             f"You have {len(mid)} clients who are in the middle \u2014 not fully active, not gone either. A small group workshop showing real portfolio growth examples could be just the push they need to become more engaged. Suggested invite list: {mid_n}.",
+             f"ROI: ~{_fi(sum(_num(c.get('portfolio',0)) for c in mid)*0.08)} potential uplift",
+             f"Workshop \u00b7 {len(mid)} clients \u00b7 This month"),
+            ("medium impact","#58a6ff","Top Client Appreciation Event",
+             f"Your {len(hni)} high-value clients hold {hni_pct}% of your total AUM ({hni_aum}). A private, exclusive event \u2014 dinner, golf, or a market outlook session \u2014 keeps them loyal and often leads to referrals. Suggested invite list: {hni_n}.",
              f"ROI: ~{_fi(sum(_num(c.get('portfolio',0)) for c in hni)*0.04)} incremental",
-             f"Industry Event \u00b7 {len(hni)} HNI contacts \u00b7 This quarter"),
-            ("medium impact","#58a6ff","Portfolio Intelligence Summit",
-             f"With {len(clients)} accounts totalling {_fi(aum)} in pipeline, host a data-driven review combining live dashboards with predictive insights. Focus: identify dormant accounts showing reactivation signals. Targets: {senior_n}.",
-             "ROI: Strategic \u2014 long-term LTV impact",
-             f"Summit \u00b7 Full portfolio \u00b7 Quarterly"),
+             f"Private Event \u00b7 {len(hni)} top clients \u00b7 This quarter"),
+            ("medium impact","#58a6ff","Annual Portfolio Review Meet",
+             f"Invite all {len(clients)} clients for a yearly review session. Walk them through how their money has grown, what is working, and what the plan is for the next year. Clients who attend these meetings rarely leave. Senior clients to prioritise: {senior_n}.",
+             "ROI: Long-term loyalty \u00b7 Fewer client exits",
+             f"Group Meet \u00b7 All {len(clients)} clients \u00b7 Yearly"),
         ]
         rows_e = ""
         for tag,tc,title,body,roi,meta_str in evs:
