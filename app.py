@@ -1089,7 +1089,7 @@ def show_dashboard(clients):
             st.markdown(f"""<div class="kdet">
               <div class="kdet-h"><span class="kdet-t">{dlbl} <span style="font-size:12px;color:var(--t2);font-weight:400">({len(dlst)} clients)</span></span></div>
               <div style="overflow-x:auto"><table class="ptable" style="margin:0">
-              <thead><tr><th></th><th>Client</th><th>Portfolio</th><th>Status</th><th>Priority</th><th>Insight</th><th>Alerts</th></tr></thead>
+              <thead><tr><th></th><th>Client</th><th>Portfolio</th><th>Status</th><th>Priority</th><th>Next Action</th><th>Insight</th><th>Alerts</th></tr></thead>
               <tbody>{rd}</tbody></table></div></div>""", unsafe_allow_html=True)
 
     st.markdown('<div style="height:1.5rem"></div>', unsafe_allow_html=True)
