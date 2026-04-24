@@ -679,6 +679,15 @@ def show_nav():
 # ── LOGIN ─────────────────────────────────────────────────────────────────────
 def show_login():
     st.markdown(get_theme_css(), unsafe_allow_html=True)
+
+    # Theme toggle on login page
+    theme = st.session_state.get("theme", "dark")
+    icon  = "☀️" if theme == "dark" else "🌙"
+    _,tc = st.columns([9,1])
+    with tc:
+        if st.button(icon, key="login_theme"):
+            st.session_state.theme = "light" if theme == "dark" else "dark"
+            st.rerun()
     
     _,col,_ = st.columns([1,1,1])
     with col:
