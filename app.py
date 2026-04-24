@@ -713,6 +713,16 @@ def show_login():
                             st.session_state.user_company = row["company"]
                             st.session_state.user_role    = row["role"]
                             st.session_state.user_plan    = row.get("plan","free")
+
+                            # ✅ GENERATE TOKEN
+                            token = secrets.token_urlsafe(32)
+                        
+                            # ✅ SAVE TOKEN IN DB
+                            db.save_session_token(row["id"], token)
+                        
+                            # ✅ STORE TOKEN IN URL
+                            st.query_params["token"] = token
+    
                             saved = db.load_clients(row["id"])
                             if saved: st.session_state.clients = saved
                             st.session_state.screen = "upload" if not saved else "dashboard"
@@ -1504,6 +1514,28 @@ def show_dashboard(clients):
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 def main():
     if "screen" not in st.session_state: st.session_state.screen = "login"
+
+    # ✅ AUTO LOGIN USING TOKEN (MOVE HERE - TOP)
+    params = st.query_params
+
+    if "token" in params and st.session_state.get("screen") == "login":
+        import database as db
+
+        row = db.get_user_by_token(params["token"])
+        if row:
+            st.session_state.user_id      = row["id"]
+            st.session_state.user_name    = row["full_name"]
+            st.session_state.user_company = row["company"]
+            st.session_state.user_role    = row["role"]
+            st.session_state.user_plan    = row.get("plan","free")
+
+            saved = db.load_clients(row["id"])
+            if saved:
+                st.session_state.clients = saved
+
+            st.session_state.screen = "dashboard"
+            st.rerun()
+            
     if "user_id" not in st.session_state and st.session_state.screen not in ("login",):
         st.session_state.screen = "login"
     screen = st.session_state.screen
