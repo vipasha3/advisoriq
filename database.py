@@ -123,6 +123,13 @@ CREATE TABLE IF NOT EXISTS whatsapp_log (
     status        TEXT,
     sent_at       TEXT
 );
+
+CREATE TABLE IF NOT EXISTS user_tokens (
+    id        SERIAL PRIMARY KEY,
+    user_id   INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    token     TEXT UNIQUE,
+    created_at TEXT
+);
 """
 
 # SQLite uses INTEGER PRIMARY KEY instead of SERIAL
@@ -214,6 +221,37 @@ def login_user(username: str, password: str) -> dict | None:
             return dict(row)
     return None
 
+def save_session_token(user_id: int, token: str):
+    ph = "?" if not USE_POSTGRES else "%s"
+    now = datetime.datetime.now().isoformat()
+
+    with get_conn() as conn:
+        c = conn.cursor()
+
+        # remove old tokens (1 device = 1 session)
+        c.execute(f"DELETE FROM user_tokens WHERE user_id={ph}", (user_id,))
+
+        c.execute(
+            f"INSERT INTO user_tokens(user_id, token, created_at) VALUES({','.join([ph]*3)})",
+            (user_id, token, now)
+        )
+
+
+def get_user_by_token(token: str):
+    ph = "?" if not USE_POSTGRES else "%s"
+
+    with get_conn() as conn:
+        c = conn.cursor()
+
+        c.execute(f"""
+            SELECT u.* FROM users u
+            JOIN user_tokens t ON u.id = t.user_id
+            WHERE t.token = {ph}
+        """, (token,))
+
+        row = c.fetchone()
+        return dict(row) if row else None
+
 
 def get_user(user_id: int) -> dict | None:
     ph = "?" if not USE_POSTGRES else "%s"
@@ -230,11 +268,7 @@ def update_sheets_url(user_id: int, sheets_url: str):
         c = conn.cursor()
         c.execute(f"UPDATE users SET sheets_url={ph} WHERE id={ph}", (sheets_url, user_id))
 
-def save_session_token(user_id, token):
-    pass
 
-def get_user_by_token(token):
-    pass
 
 
 # ── Clients ───────────────────────────────────────────────────────────────────
