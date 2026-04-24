@@ -1170,23 +1170,7 @@ def show_dashboard(clients):
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 key="export_btn", use_container_width=True)
 
-        # ── Header row ────────────────────────────────────────────────────────
-        st.markdown(
-            "<table class='ptable' style='width:100%;margin-bottom:0'>"
-            "<thead><tr>"
-            "<th style='width:44px'></th>"
-            "<th>Client Name</th>"
-            "<th>Portfolio Value</th>"
-            "<th>Client Since</th>"
-            "<th>Health Score</th>"
-            "<th>Priority</th>"
-            "<th>Leaving Risk</th>"
-            "<th>Alerts</th>"
-            "<th style='width:40px'></th>"
-            "</tr></thead>"
-            "</table>",
-            unsafe_allow_html=True
-        )
+
 
         # ── One single table for header + all rows ────────────────────────────
         if "exp_row" not in st.session_state: st.session_state.exp_row = None
