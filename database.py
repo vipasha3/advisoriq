@@ -230,6 +230,12 @@ def update_sheets_url(user_id: int, sheets_url: str):
         c = conn.cursor()
         c.execute(f"UPDATE users SET sheets_url={ph} WHERE id={ph}", (sheets_url, user_id))
 
+def save_session_token(user_id, token):
+    pass
+
+def get_user_by_token(token):
+    pass
+
 
 # ── Clients ───────────────────────────────────────────────────────────────────
 def save_clients(user_id: int, clients: list, source: str = "upload"):
