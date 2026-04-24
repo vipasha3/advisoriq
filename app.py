@@ -1172,24 +1172,27 @@ def show_dashboard(clients):
 
 
 
-        # ── Render each row individually with its own expand button ──────────
         if "exp_row" not in st.session_state: st.session_state.exp_row = None
 
-        # Header
-        st.markdown(
-            "<table class='ptable' style='width:100%;margin-bottom:0'>"
-            "<thead><tr>"
-            "<th style='width:44px'></th>"
-            "<th>Client Name</th>"
-            "<th>Portfolio Value</th>"
-            "<th>Client Since</th>"
-            "<th>Health Score</th>"
-            "<th>Priority</th>"
-            "<th>Leaving Risk</th>"
-            "<th>Alerts</th>"
-            "</tr></thead></table>",
-            unsafe_allow_html=True
-        )
+        # Grid CSS
+        st.markdown("""
+        <style>
+        .cgrid { display:grid; grid-template-columns:50px 2fr 1fr 1fr 1.2fr 0.8fr 0.8fr 1.2fr; align-items:center; padding:8px 12px; border-bottom:1px solid var(--bd); }
+        .cgrid-hdr { font-size:10px; text-transform:uppercase; letter-spacing:.06em; font-family:'DM Mono',monospace; color:var(--t3); font-weight:500; background:var(--s2); border-radius:6px 6px 0 0; }
+        .cgrid-row { cursor:pointer; transition:background .1s; }
+        .cgrid-row:hover { background:var(--s2); }
+        </style>
+        <div class="cgrid cgrid-hdr">
+          <div></div>
+          <div>Client Name</div>
+          <div>Portfolio Value</div>
+          <div>Client Since</div>
+          <div>Health Score</div>
+          <div>Priority</div>
+          <div>Leaving Risk</div>
+          <div>Alerts</div>
+        </div>
+        """, unsafe_allow_html=True)
 
         for i,c in enumerate(filtered[:20]):
             sc    = c.get("score", 0)
@@ -1202,35 +1205,29 @@ def show_dashboard(clients):
             tags_h= "".join('<span class="tag">'+f+'</span>' for f in c.get("flags",[])[:2])
             is_exp= st.session_state.exp_row == i
 
-            # Row
             st.markdown(
-                "<table class='ptable' style='width:100%;margin:0;border-top:none'><tbody>"
-                "<tr>"
-                "<td class='prank' style='width:44px'>" + rank + "</td>"
-                "<td>"
-                  "<div class='pname'>" + str(c.get("name","—")) + "</div>"
-                  "<div class='psub'>" + str(c.get("goal","—")) + " \u00b7 Age " + str(c.get("age","—")) + "</div>"
-                "</td>"
-                "<td style=\"font-family:'DM Mono',monospace;font-size:12px;width:130px\">" + _fi(c.get("portfolio",0)) + "</td>"
-                "<td style='font-family:DM Mono,monospace;font-size:11px;color:var(--t3);width:110px'>" + str(c.get("tenure","—")) + "</td>"
-                "<td style='width:160px'><div class='sbar'>"
-                  "<span class='snum' style='color:" + fill + "'>" + str(sc) + "</span>"
-                  "<span class='strack'><span class='sfill' style='width:" + str(sc) + "%;background:" + fill + "'></span></span>"
-                "</div></td>"
-                "<td style='width:100px'><span class='chip " + cc2 + "'>" + pr + "</span></td>"
-                "<td style='font-family:DM Mono,monospace;font-size:11px;color:" + chcol + ";width:100px'>" + str(ch) + "%</td>"
-                "<td style='font-size:11px'>" + tags_h + "</td>"
-                "</tr></tbody></table>",
+                "<div class='cgrid cgrid-row' style='" + ("background:var(--s2);" if is_exp else "") + "'>"
+                "<div style='font-family:DM Mono,monospace;font-size:12px;color:var(--t3)'>" + rank + "</div>"
+                "<div><div class='pname'>" + str(c.get("name","—")) + "</div>"
+                "<div class='psub'>" + str(c.get("goal","—")) + " \u00b7 Age " + str(c.get("age","—")) + "</div></div>"
+                "<div style=\"font-family:'DM Mono',monospace;font-size:12px\">" + _fi(c.get("portfolio",0)) + "</div>"
+                "<div style='font-family:DM Mono,monospace;font-size:11px;color:var(--t3)'>" + str(c.get("tenure","—")) + "</div>"
+                "<div><div class='sbar'>"
+                "<span class='snum' style='color:" + fill + "'>" + str(sc) + "</span>"
+                "<span class='strack'><span class='sfill' style='width:" + str(sc) + "%;background:" + fill + "'></span></span>"
+                "</div></div>"
+                "<div><span class='chip " + cc2 + "'>" + pr + "</span></div>"
+                "<div style='font-family:DM Mono,monospace;font-size:11px;color:" + chcol + "'>" + str(ch) + "%</div>"
+                "<div style='font-size:11px'>" + tags_h + "</div>"
+                "</div>",
                 unsafe_allow_html=True
             )
 
-            # Expand button right after each row
             _,bc = st.columns([11,1])
             with bc:
                 if st.button("\u25b2" if is_exp else "\u25bc", key=f"er_{i}"):
                     st.session_state.exp_row = None if is_exp else i; st.rerun()
 
-            # Expand panel
             if is_exp:
                 sip_val = _fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "Not started"
                 insight = c.get("feature_importance", "No insight available")
