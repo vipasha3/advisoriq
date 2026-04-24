@@ -360,14 +360,14 @@ def get_theme_css():
     st.session_state["plotly_line"] = plotly_line
 
     return f"""<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {{
 {vars_css}
 }}
 
 *{{box-sizing:border-box}}
-html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color:var(--tx)!important;font-family:'Inter',sans-serif!important;font-feature-settings:'cv02','cv03','cv04','cv11';-webkit-font-smoothing:antialiased}}
+html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color:var(--tx)!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-feature-settings:'cv02','cv03','cv04','cv11';-webkit-font-smoothing:antialiased}}
 [data-testid=stHeader],[data-testid=stDecoration],footer{{display:none!important}}
 [data-testid=stSidebar]{{background:var(--s1)!important;border-right:1px solid var(--bd)!important}}
 .block-container{{padding:0!important;max-width:100%!important}}
@@ -484,12 +484,12 @@ html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color
 .sync-dot{{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:pulse 2s infinite}}
 @keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:.4}}}}
 
-.stButton>button{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;font-family:'Inter',sans-serif!important;font-size:13px!important;font-weight:400!important;border-radius:6px!important;padding:6px 16px!important}}
+.stButton>button{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-size:13px!important;font-weight:400!important;border-radius:6px!important;padding:6px 16px!important}}
 .stButton>button:hover{{background:var(--s3)!important}}
 .stTextInput>div>div>input{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:'DM Sans',sans-serif!important;font-size:13px!important}}
 .stSelectbox>div>div{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important}}
 .stTabs [data-baseweb=tab-list]{{background:var(--s2)!important;border-bottom:1px solid var(--bd)!important;padding:0 .5rem!important;gap:0!important}}
-.stTabs [data-baseweb=tab]{{color:var(--t2)!important;font-family:'Inter',sans-serif!important;font-size:13px!important;font-weight:400!important;padding:10px 16px!important;border-radius:0!important;border-bottom:2px solid transparent!important}}
+.stTabs [data-baseweb=tab]{{color:var(--t2)!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-size:13px!important;font-weight:400!important;padding:10px 16px!important;border-radius:0!important;border-bottom:2px solid transparent!important}}
 .stTabs [aria-selected=true]{{color:var(--tx)!important;border-bottom-color:var(--bl)!important;background:transparent!important}}
 textarea{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:'DM Sans',sans-serif!important}}
 .stRadio label{{color:var(--t2)!important;font-size:13px!important}}
