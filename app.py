@@ -377,13 +377,12 @@ html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color
 .nav-icon{{width:30px;height:30px;background:var(--gr);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#000}}
 .nav-brand{{font-size:15px;font-weight:500;color:var(--tx)}}.nav-brand em{{color:var(--gr);font-style:normal}}
 .nav-right{{display:flex;align-items:center;gap:10px}}
-.nav-user{{font-size:12px;color:var(--t2);font-family:'DM Mono',monospace}}
+.nav-user{{font-size:12px;color:var(--t2);font-family:'JetBrains Mono',monospace}}
 .nav-role{{font-size:11px;padding:2px 8px;border-radius:12px;background:var(--grbg);color:var(--gr);border:1px solid var(--grbd);font-weight:500}}
-.bc{{padding:8px 1.5rem;background:var(--s1);border-bottom:1px solid var(--bd);font-size:12px;color:var(--t3);font-family:'DM Mono',monospace}}
-.bc em{{color:var(--bl);font-style:normal}}
+.bc{{padding:8px 1.5rem;background:var(--s1);border-bottom:1px solid var(--bd);font-size:12px;color:var(--t3);font-family:'DM Mono',monospace}}.bc em{{color:var(--bl);font-style:normal}}
 .wrap{{padding:1.5rem;max-width:1440px;margin:0 auto}}
 .greet{{display:flex;align-items:center;justify-content:space-between;background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1.5rem}}
-.gt{{font-size:11px;font-family:'DM Mono',monospace;color:var(--gr);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}}
+.gt{{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gr);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}}
 .gn{{font-size:1.4rem;font-weight:500;letter-spacing:-.3px;margin-bottom:4px}}
 .gsub{{font-size:13px;color:var(--t2)}}
 .gstats{{display:flex;gap:2rem;text-align:right}}
@@ -410,7 +409,7 @@ html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color
 .mgr{{background:var(--grbg);border:1px solid var(--grbd)}}.mbl{{background:var(--blbg);border:1px solid var(--blbd)}}.mam{{background:var(--ambg);border:1px solid var(--ambd)}}.mpu{{background:var(--pubg);border:1px solid var(--pubd)}}.mrd{{background:var(--rdbg);border:1px solid var(--rdbd)}}
 .mtitle{{font-size:14px;font-weight:500;margin-bottom:2px}}.msub{{font-size:12px;color:var(--t2)}}
 .ptable{{width:100%;border-collapse:collapse;font-size:13px}}
-.ptable thead th{{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;color:var(--t3);font-weight:500;padding:8px 12px;border-bottom:1px solid var(--bd);text-align:left}}
+.ptable thead th{{font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;color:var(--t2);font-weight:700;padding:12px 12px;border-bottom:2px solid var(--bl);text-align:left}}
 .ptable tbody tr{{border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s}}
 .ptable tbody tr:hover,.ptable tbody tr.xp{{background:var(--s2)}}
 .prank{{font-family:'DM Mono',monospace;font-size:12px;color:var(--t3);width:44px}}
@@ -486,12 +485,12 @@ html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color
 
 .stButton>button{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-size:13px!important;font-weight:400!important;border-radius:6px!important;padding:6px 16px!important}}
 .stButton>button:hover{{background:var(--s3)!important}}
-.stTextInput>div>div>input{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:'DM Sans',sans-serif!important;font-size:13px!important}}
+.stTextInput>div>div>input{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-size:13px!important}}
 .stSelectbox>div>div{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important}}
 .stTabs [data-baseweb=tab-list]{{background:var(--s2)!important;border-bottom:1px solid var(--bd)!important;padding:0 .5rem!important;gap:0!important}}
 .stTabs [data-baseweb=tab]{{color:var(--t2)!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-size:13px!important;font-weight:400!important;padding:10px 16px!important;border-radius:0!important;border-bottom:2px solid transparent!important}}
 .stTabs [aria-selected=true]{{color:var(--tx)!important;border-bottom-color:var(--bl)!important;background:transparent!important}}
-textarea{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:'DM Sans',sans-serif!important}}
+textarea{{background:var(--s2)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;border-radius:6px!important;font-family:'Plus Jakarta Sans',sans-serif!important}}
 .stRadio label{{color:var(--t2)!important;font-size:13px!important}}
 .stAlert{{background:var(--s2)!important;border-radius:6px!important;color:var(--t2)!important}}
 div[data-testid=stFileUploader]{{background:var(--s1)!important;border:1px dashed var(--bd2)!important;border-radius:8px!important;padding:1rem!important}}
@@ -508,7 +507,7 @@ hr{{border-color:var(--bd)!important}}
   color: var(--tx);
   border-radius: 50px;
   padding: 8px 16px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   cursor: pointer;
   box-shadow: 0 2px 12px rgba(0,0,0,0.15);
@@ -554,7 +553,7 @@ def get_pc():
     return {
         "paper_bgcolor": paper,
         "plot_bgcolor":  bg,
-        "font": dict(family="DM Sans,sans-serif", color=font, size=11),
+        "font": dict(family="Plus Jakarta Sans,sans-serif", color=font, size=11),
         "margin": dict(l=8,r=8,t=32,b=8),
         "showlegend": False,
         "xaxis": dict(showgrid=False, zeroline=False, color=font,
