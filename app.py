@@ -1172,10 +1172,11 @@ def show_dashboard(clients):
 
 
 
-        # ── One single table for header + all rows ────────────────────────────
+        # ── Render each row individually with its own expand button ──────────
         if "exp_row" not in st.session_state: st.session_state.exp_row = None
 
-        all_rows_html = (
+        # Header
+        st.markdown(
             "<table class='ptable' style='width:100%;margin-bottom:0'>"
             "<thead><tr>"
             "<th style='width:44px'></th>"
@@ -1186,7 +1187,8 @@ def show_dashboard(clients):
             "<th>Priority</th>"
             "<th>Leaving Risk</th>"
             "<th>Alerts</th>"
-            "</tr></thead><tbody>"
+            "</tr></thead></table>",
+            unsafe_allow_html=True
         )
 
         for i,c in enumerate(filtered[:20]):
@@ -1198,39 +1200,40 @@ def show_dashboard(clients):
             cc2   = "chi" if pr=="High" else ("chm" if pr=="Medium" else "chl")
             rank  = "\U0001f947" if i==0 else ("\U0001f948" if i==1 else ("\U0001f949" if i==2 else "#"+str(i+1)))
             tags_h= "".join('<span class="tag">'+f+'</span>' for f in c.get("flags",[])[:2])
+            is_exp= st.session_state.exp_row == i
 
-            all_rows_html += (
+            # Row
+            st.markdown(
+                "<table class='ptable' style='width:100%;margin:0;border-top:none'><tbody>"
                 "<tr>"
-                "<td class='prank'>" + rank + "</td>"
+                "<td class='prank' style='width:44px'>" + rank + "</td>"
                 "<td>"
                   "<div class='pname'>" + str(c.get("name","—")) + "</div>"
                   "<div class='psub'>" + str(c.get("goal","—")) + " \u00b7 Age " + str(c.get("age","—")) + "</div>"
                 "</td>"
-                "<td style=\"font-family:'DM Mono',monospace;font-size:12px\">" + _fi(c.get("portfolio",0)) + "</td>"
-                "<td style='font-family:DM Mono,monospace;font-size:11px;color:var(--t3)'>" + str(c.get("tenure","—")) + "</td>"
-                "<td><div class='sbar'>"
+                "<td style=\"font-family:'DM Mono',monospace;font-size:12px;width:130px\">" + _fi(c.get("portfolio",0)) + "</td>"
+                "<td style='font-family:DM Mono,monospace;font-size:11px;color:var(--t3);width:110px'>" + str(c.get("tenure","—")) + "</td>"
+                "<td style='width:160px'><div class='sbar'>"
                   "<span class='snum' style='color:" + fill + "'>" + str(sc) + "</span>"
                   "<span class='strack'><span class='sfill' style='width:" + str(sc) + "%;background:" + fill + "'></span></span>"
                 "</div></td>"
-                "<td><span class='chip " + cc2 + "'>" + pr + "</span></td>"
-                "<td style='font-family:DM Mono,monospace;font-size:11px;color:" + chcol + "'>" + str(ch) + "%</td>"
+                "<td style='width:100px'><span class='chip " + cc2 + "'>" + pr + "</span></td>"
+                "<td style='font-family:DM Mono,monospace;font-size:11px;color:" + chcol + ";width:100px'>" + str(ch) + "%</td>"
                 "<td style='font-size:11px'>" + tags_h + "</td>"
-                "</tr>"
+                "</tr></tbody></table>",
+                unsafe_allow_html=True
             )
 
-        all_rows_html += "</tbody></table>"
-        st.markdown(all_rows_html, unsafe_allow_html=True)
-
-        # ── Expand buttons (separate, below table) ────────────────────────────
-        for i,c in enumerate(filtered[:20]):
-            is_exp = st.session_state.exp_row == i
+            # Expand button right after each row
             _,bc = st.columns([11,1])
             with bc:
                 if st.button("\u25b2" if is_exp else "\u25bc", key=f"er_{i}"):
                     st.session_state.exp_row = None if is_exp else i; st.rerun()
+
+            # Expand panel
             if is_exp:
-                insight = c.get("feature_importance", "No insight available")
                 sip_val = _fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "Not started"
+                insight = c.get("feature_importance", "No insight available")
                 st.markdown(
                     "<div class='xin' style='margin-bottom:8px'>"
                     "<div class='xlbl'>\U0001f4a1 What this means</div>"
