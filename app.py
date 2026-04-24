@@ -1176,8 +1176,23 @@ def show_dashboard(clients):
         st.markdown("""
         <style>
         .cgrid { display:grid; grid-template-columns:50px 2fr 1fr 1fr 1.2fr 0.8fr 0.8fr 1.2fr; align-items:center; padding:8px 12px; border-bottom:1px solid var(--bd); }
-        .cgrid-hdr { font-size:10px; text-transform:uppercase; letter-spacing:.06em; font-family:'DM Mono',monospace; color:var(--t3); font-weight:500; background:var(--s2); border-radius:6px 6px 0 0; }
-        .cgrid-row { cursor:pointer; transition:background .1s; }
+       .cgrid-hdr { 
+            font-size:11px; 
+            text-transform:uppercase; 
+            letter-spacing:.08em; 
+            font-family:'JetBrains Mono',monospace; 
+            color:var(--t2); 
+            font-weight:600; 
+            background:var(--s2); 
+            border-radius:6px 6px 0 0;
+            border-bottom:2px solid var(--bl);
+            padding:12px 12px;
+        }
+        .cgrid-row {
+            cursor:pointer; 
+            transition:background .1s;
+            border-bottom:1px solid var(--bd);
+        }
         .cgrid-row:hover { background:var(--s2); }
         </style>
         <div class="cgrid cgrid-hdr">
