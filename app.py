@@ -1141,64 +1141,111 @@ def show_dashboard(clients):
     # TAB 1 ── Priority Rankings
     with tab1:
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="mhd"><div class="mic mbl">\u2261</div><div><div class="mtitle">Priority Rankings</div><div class="msub">Sorted by ML health score \u00b7 Click any row for strategic recommendation</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="mhd"><div class="mic mbl">\u2261</div><div><div class="mtitle">Priority Rankings</div><div class="msub">Clients sorted by health score \u00b7 Click \u25bc to see details</div></div></div>', unsafe_allow_html=True)
         sf1,sf2,sf3,sf4 = st.columns([3,2,1.2,1.2])
         with sf1: sq   = st.text_input("", placeholder="\U0001f50d  Search client name or product...", label_visibility="collapsed", key="sq")
         with sf2: fsel = st.selectbox("",["All clients","Ready to act","Medium","Needs attention","Leaving risk","No SIP","No Nominee"],label_visibility="collapsed")
         with sf3: amin = st.number_input("Min AUM (L)", min_value=0, max_value=10000, value=0,     step=10, label_visibility="collapsed", key="amin")
         with sf4: amax = st.number_input("Max AUM (L)", min_value=0, max_value=10000, value=10000, step=10, label_visibility="collapsed", key="amax")
         filtered = clients
-        if "Ready"   in fsel: filtered=[c for c in clients if c.get("priority")=="High"]
-        elif "Medium" in fsel: filtered=[c for c in clients if c.get("priority")=="Medium"]
-        elif "Needs"  in fsel: filtered=[c for c in clients if c.get("priority")=="Low"]
+        if "Ready"    in fsel: filtered=[c for c in clients if c.get("priority")=="High"]
+        elif "Medium"  in fsel: filtered=[c for c in clients if c.get("priority")=="Medium"]
+        elif "Needs"   in fsel: filtered=[c for c in clients if c.get("priority")=="Low"]
         elif "Leaving" in fsel: filtered=[c for c in clients if c.get("churn",0)>50]
         elif "No SIP"  in fsel: filtered=[c for c in clients if "No SIP" in c.get("flags",[])]
         elif "Nominee" in fsel: filtered=[c for c in clients if "No Nominee" in c.get("flags",[])]
         if sq: filtered=[c for c in filtered if sq.lower() in c.get("name","").lower() or sq.lower() in c.get("goal","").lower()]
         if amin>0 or amax<10000: filtered=[c for c in filtered if amin*1e5<=_num(c.get("portfolio",0))<=amax*1e5]
+
         rc1,rc2 = st.columns([5,1])
-        with rc1: st.markdown(f"<div style='font-size:11px;color:var(--t3);font-family:\"DM Mono\",monospace;margin-bottom:.75rem'>{len(filtered)} of {len(clients)} records \u00b7 sorted by ML score</div>", unsafe_allow_html=True)
+        with rc1:
+            st.markdown(
+                "<div style='font-size:11px;color:var(--t3);font-family:DM Mono,monospace;margin-bottom:.75rem'>"
+                + str(len(filtered)) + " of " + str(len(clients)) + " clients shown"
+                "</div>", unsafe_allow_html=True)
         with rc2:
             excel_data = export_excel(filtered)
             st.download_button(label="\u2193 Export", data=excel_data,
                 file_name=f"advisoriq_{datetime.datetime.now().strftime('%Y%m%d')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 key="export_btn", use_container_width=True)
+
+        # ── Header row ────────────────────────────────────────────────────────
+        st.markdown(
+            "<table class='ptable' style='width:100%;margin-bottom:0'>"
+            "<thead><tr>"
+            "<th style='width:44px'></th>"
+            "<th>Client Name</th>"
+            "<th>Portfolio Value</th>"
+            "<th>Client Since</th>"
+            "<th>Health Score</th>"
+            "<th>Priority</th>"
+            "<th>Leaving Risk</th>"
+            "<th>Alerts</th>"
+            "<th style='width:40px'></th>"
+            "</tr></thead>"
+            "</table>",
+            unsafe_allow_html=True
+        )
+
         if "exp_row" not in st.session_state: st.session_state.exp_row = None
+
+        # ── Client rows ───────────────────────────────────────────────────────
         for i,c in enumerate(filtered[:20]):
-            sc=c.get("score",0); ch=c.get("churn",0); pr=c.get("priority","Low")
+            sc    = c.get("score", 0)
+            ch    = c.get("churn", 0)
+            pr    = c.get("priority", "Low")
             fill  = "#3fb950" if sc>=70 else ("#d29922" if sc>=45 else "#f85149")
             chcol = "#f85149" if ch>60  else ("#d29922" if ch>30  else "#3fb950")
             cc2   = "chi" if pr=="High" else ("chm" if pr=="Medium" else "chl")
-            rank  = "\U0001f947" if i==0 else ("\U0001f948" if i==1 else ("\U0001f949" if i==2 else f"#{i+1}"))
-            tags_h= "".join(f'<span class="tag">{f}</span>' for f in c.get("flags",[])[:2])
-            is_exp= st.session_state.exp_row==i
-            st.markdown(f"""<table class="ptable" style="margin-bottom:0"><tbody>
-            <tr class="{'xp' if is_exp else ''}">
-              <td class="prank">{rank}</td>
-              <td><div class="pname">{c.get("name","\u2014")}</div><div class="psub">{c.get("goal","\u2014")} \u00b7 Age {c.get("age","\u2014")}</div></td>
-              <td style="font-family:'DM Mono',monospace;font-size:12px">{_fi(c.get("portfolio",0))}</td>
-              <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--t3)">{c.get("tenure","\u2014")}</td>
-              <td><div class="sbar"><span class="snum" style="color:{fill}">{sc}</span>
-                <span class="strack"><span class="sfill" style="width:{sc}%;background:{fill}"></span></span></div></td>
-              <td><span class="chip {cc2}">{pr}</span></td>
-              <td style="font-family:'DM Mono',monospace;font-size:11px;color:{chcol}">{ch}%</td>
-              <td style="font-size:11px">{tags_h}</td>
-            </tr></tbody></table>""", unsafe_allow_html=True)
+            rank  = "\U0001f947" if i==0 else ("\U0001f948" if i==1 else ("\U0001f949" if i==2 else "#"+str(i+1)))
+            tags_h= "".join('<span class="tag">'+f+'</span>' for f in c.get("flags",[])[:2])
+            is_exp= st.session_state.exp_row == i
+
+            row_html = (
+                "<table class='ptable' style='margin-bottom:0;width:100%'><tbody>"
+                "<tr class='" + ("xp" if is_exp else "") + "'>"
+                "<td class='prank'>" + rank + "</td>"
+                "<td>"
+                  "<div class='pname'>" + str(c.get("name","—")) + "</div>"
+                  "<div class='psub'>" + str(c.get("goal","—")) + " \u00b7 Age " + str(c.get("age","—")) + "</div>"
+                "</td>"
+                "<td style=\"font-family:'DM Mono',monospace;font-size:12px\">" + _fi(c.get("portfolio",0)) + "</td>"
+                "<td style='font-family:DM Mono,monospace;font-size:11px;color:var(--t3)'>" + str(c.get("tenure","—")) + "</td>"
+                "<td><div class='sbar'>"
+                  "<span class='snum' style='color:" + fill + "'>" + str(sc) + "</span>"
+                  "<span class='strack'><span class='sfill' style='width:" + str(sc) + "%;background:" + fill + "'></span></span>"
+                "</div></td>"
+                "<td><span class='chip " + cc2 + "'>" + pr + "</span></td>"
+                "<td style='font-family:DM Mono,monospace;font-size:11px;color:" + chcol + "'>" + str(ch) + "%</td>"
+                "<td style='font-size:11px'>" + tags_h + "</td>"
+                "<td></td>"
+                "</tr></tbody></table>"
+            )
+            st.markdown(row_html, unsafe_allow_html=True)
+
             _,bc = st.columns([11,1])
             with bc:
                 if st.button("\u25b2" if is_exp else "\u25bc", key=f"er_{i}"):
                     st.session_state.exp_row = None if is_exp else i; st.rerun()
+
             if is_exp:
                 insight = c.get("feature_importance", "No insight available")
-                tag     = "🧠 AI Insight" if c.get("ml_powered") else ""
-                st.markdown(f"""<div class="xin" style="margin-bottom:8px">
-                  <div class="xlbl">{tag} Strategic Recommendation</div>
-                  <div class="xtxt">{c.get('name','')} \u2192 {insight}</div>
-                  <div style="margin-top:8px;font-size:11px;color:var(--t3);font-family:'DM Mono',monospace">
-                    \U0001f4c5 Since {c.get("tenure","\u2014")} \u00b7 \U0001f4cb Nominee: {c.get("nominee","\u2014")} \u00b7 \U0001f4b0 SIP: {_fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "None"}
-                  </div>
-                </div>""", unsafe_allow_html=True)
+                sip_val = _fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "Not started"
+                nom_val = str(c.get("nominee","—"))
+                ten_val = str(c.get("tenure","—"))
+                name_val= str(c.get("name",""))
+                st.markdown(
+                    "<div class='xin' style='margin-bottom:8px'>"
+                    "<div class='xlbl'>\U0001f4a1 What this means</div>"
+                    "<div class='xtxt'>" + name_val + " \u2192 " + insight + "</div>"
+                    "<div style='margin-top:8px;font-size:11px;color:var(--t3);font-family:DM Mono,monospace'>"
+                    "\U0001f4c5 Client since " + ten_val +
+                    " \u00b7 \U0001f4cb Nominee filed: " + nom_val +
+                    " \u00b7 \U0001f4b0 Monthly SIP: " + sip_val +
+                    "</div></div>",
+                    unsafe_allow_html=True
+                )
 
     # TAB 2 ── Smart Next Best Action
     with tab2:
