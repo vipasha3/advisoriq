@@ -1070,7 +1070,7 @@ def show_dashboard(clients):
                   <div class="psub">{c.get("goal","\u2014")} \u00b7 Age {c.get("age","\u2014")}</div></td>
                   <td style="font-family:'DM Mono',monospace;font-size:12px">{_fi(c.get("portfolio",0))}</td>
                 
-                  <!-- ✅ FIXED CELL -->
+                  
                   <td>
                     <div class="sbar">
                       <span class="snum" style="color:{fill}">{label}</span>
@@ -1078,10 +1078,10 @@ def show_dashboard(clients):
                   </td>
                 
                   <td><span class="chip {cc2}">{pr}</span></td>
-                  <!-- ✅ NEW ACTION -->
+                  
                   <td style="font-size:12px">{action}</td>
                 
-                  <!-- ✅ NEW INSIGHT -->
+                  
                   <td style="font-size:12px;color:var(--t2)">{explanation}</td>
                   <td style="font-size:11px;font-family:'DM Mono',monospace;color:var(--t2)">
                   {" · ".join(c.get("flags",[])[:2]) or "—"}
