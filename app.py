@@ -1048,14 +1048,6 @@ def show_dashboard(clients):
             "ksip":  ("Revenue gap \u2014 no SIP despite portfolio", no_sip),
             "knom":  ("Paperwork due \u2014 nominee missing", no_nom),
         }
-        if active:
-        dmap = {
-            "kaum":  ("Total AUM breakdown", clients),
-            "khigh": ("Ready to act \u2014 call these first", high),
-            "krisk": ("Leaving risk \u2014 contact urgently", at_risk),
-            "ksip":  ("Revenue gap \u2014 no SIP despite portfolio", no_sip),
-            "knom":  ("Paperwork due \u2014 nominee missing", no_nom),
-        }
         if active in dmap:
             dlbl, dlst = dmap[active]
             rows_html = []
