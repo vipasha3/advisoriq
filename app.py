@@ -1342,74 +1342,99 @@ def show_dashboard(clients):
     # Chart 1 — AUM Donut by Priority
     with gc1:
         p_aum = [sum(_num(c.get("portfolio",0)) for c in clients if c.get("priority")==p) for p in ["High","Medium","Low"]]
-        fig1 = go.Figure(go.Pie(
-            labels=["Ready to act","Medium","Needs work"],
-            values=[round(v/1e5,1) for v in p_aum],
-            hole=0.65,
-            marker=dict(colors=["#3fb950","#d29922","#f85149"],line=dict(width=0)),
-            textinfo="label+percent",
-            textfont=dict(size=11, color=PC["font"]["color"]),
-            hovertemplate="<b>%{label}</b><br>₹%{value}L<br>%{percent}<extra></extra>"
-        ))
         total_aum_l = round(sum(p_aum)/1e5, 1)
-        fig1.update_layout(**{**PC,
-            "title": dict(text="AUM by client priority", font=dict(size=12, color=PC["font"]["color"]), x=0),
-            "annotations": [dict(text=f"₹{total_aum_l}L<br><span style='font-size:10px'>Total</span>",
-                x=0.5, y=0.5, font=dict(size=13, color=PC["font"]["color"]), showarrow=False)]
-        })
+        fig1 = go.Figure(go.Pie(
+            labels=["Ready","Medium","Needs work"],
+            values=[round(v/1e5,1) for v in p_aum],
+            hole=0.6,
+            marker=dict(colors=["#3fb950","#d29922","#f85149"], line=dict(width=0)),
+            textinfo="percent",
+            textfont=dict(size=10, color="#ffffff"),
+            hovertemplate="<b>%{label}</b><br>₹%{value}L · %{percent}<extra></extra>"
+        ))
+        fig1.update_layout(
+            paper_bgcolor=PC["paper_bgcolor"],
+            plot_bgcolor=PC["plot_bgcolor"],
+            font=dict(family="Plus Jakarta Sans", color=PC["font"]["color"], size=10),
+            margin=dict(l=8, r=8, t=32, b=8),
+            showlegend=True,
+            legend=dict(
+                orientation="h", x=0.5, xanchor="center", y=-0.15,
+                font=dict(size=10, color=PC["font"]["color"])
+            ),
+            title=dict(text="AUM by priority", font=dict(size=12, color=PC["font"]["color"]), x=0),
+            annotations=[dict(
+                text=f"₹{total_aum_l}L",
+                x=0.5, y=0.5,
+                font=dict(size=14, color=PC["font"]["color"], family="JetBrains Mono"),
+                showarrow=False
+            )],
+            height=280
+        )
         st.plotly_chart(fig1, use_container_width=True, config={"displayModeBar":False})
 
-    # Chart 2 — Top 8 clients by Portfolio (Horizontal bar)
+    # Chart 2 — Top 8 clients horizontal bar
     with gc2:
-        top8 = sorted(clients, key=lambda x: _num(x.get("portfolio",0)), reverse=True)[:8]
-        names8  = [c.get("name","").split()[0] for c in top8]
-        ports8  = [round(_num(c.get("portfolio",0))/1e5, 1) for c in top8]
-        colors8 = ["#3fb950" if c.get("priority")=="High" else ("#d29922" if c.get("priority")=="Medium" else "#f85149") for c in top8]
+        top8   = sorted(clients, key=lambda x: _num(x.get("portfolio",0)), reverse=True)[:8]
+        names8 = [c.get("name","").split()[0] for c in top8]
+        ports8 = [round(_num(c.get("portfolio",0))/1e5, 1) for c in top8]
+        colors8= ["#3fb950" if c.get("priority")=="High" else ("#d29922" if c.get("priority")=="Medium" else "#f85149") for c in top8]
         fig2 = go.Figure(go.Bar(
-            x=ports8, y=names8, orientation="h",
+            x=ports8,
+            y=names8,
+            orientation="h",
             marker=dict(color=colors8, line=dict(width=0)),
             text=[f"₹{v}L" for v in ports8],
             textposition="outside",
             textfont=dict(size=10, color=PC["font"]["color"]),
             hovertemplate="<b>%{y}</b><br>₹%{x}L<extra></extra>"
         ))
-        fig2.update_layout(**{**PC,
-            "title": dict(text="Top 8 clients by portfolio", font=dict(size=12, color=PC["font"]["color"]), x=0),
-            "yaxis": dict(**PC["yaxis"], autorange="reversed", tickfont=dict(size=10)),
-            "xaxis": dict(**PC["xaxis"], title="Portfolio (Lakhs)"),
-            "margin": dict(l=8, r=40, t=32, b=8)
-        })
+        fig2.update_layout(
+            paper_bgcolor=PC["paper_bgcolor"],
+            plot_bgcolor=PC["plot_bgcolor"],
+            font=dict(family="Plus Jakarta Sans", color=PC["font"]["color"], size=10),
+            margin=dict(l=8, r=48, t=32, b=8),
+            showlegend=False,
+            title=dict(text="Top 8 clients by portfolio", font=dict(size=12, color=PC["font"]["color"]), x=0),
+            xaxis=dict(showgrid=False, zeroline=False, color=PC["font"]["color"], tickfont=dict(size=9), title="Lakhs"),
+            yaxis=dict(showgrid=False, zeroline=False, color=PC["font"]["color"], tickfont=dict(size=10), categoryorder="total ascending"),
+            height=280
+        )
         st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar":False})
 
-    # Chart 3 — Churn Risk Gauge style bubble
+    # Chart 3 — Bubble: Health score vs Churn risk
     with gc3:
         sx  = [c.get("score", 0) for c in clients]
         sy  = [c.get("churn", 0) for c in clients]
         sn  = [c.get("name", "") for c in clients]
-        sz  = [max(8, min(30, _num(c.get("portfolio",0))/5e5)) for c in clients]
+        sz  = [max(10, min(35, _num(c.get("portfolio",0))/4e5)) for c in clients]
         scc = ["#f85149" if c.get("churn",0)>50 else ("#d29922" if c.get("churn",0)>25 else "#3fb950") for c in clients]
         fig3 = go.Figure(go.Scatter(
             x=sx, y=sy, mode="markers",
-            marker=dict(color=scc, size=sz, line=dict(width=1, color="rgba(255,255,255,0.1)"),
-                        sizemode="area"),
+            marker=dict(color=scc, size=sz, line=dict(width=1, color="rgba(255,255,255,0.1)"), opacity=0.85),
             text=sn,
             hovertemplate="<b>%{text}</b><br>Score: %{x}<br>Churn: %{y}%<extra></extra>"
         ))
-        fig3.add_shape(type="rect", x0=70, x1=105, y0=0, y1=105,
-            fillcolor="rgba(63,185,80,0.05)", line=dict(color="#3fb950", width=1, dash="dot"))
-        fig3.add_shape(type="rect", x0=0, x1=105, y0=60, y1=105,
-            fillcolor="rgba(248,81,73,0.05)", line=dict(color="#f85149", width=1, dash="dot"))
-        fig3.add_annotation(x=87, y=102, text="Best zone", showarrow=False,
-            font=dict(size=9, color="#3fb950"), bgcolor="rgba(0,0,0,0)")
-        fig3.add_annotation(x=15, y=102, text="High risk zone", showarrow=False,
-            font=dict(size=9, color="#f85149"), bgcolor="rgba(0,0,0,0)")
-        fig3.update_layout(**{**PC,
-            "title": dict(text="Health score vs leaving risk", font=dict(size=12, color=PC["font"]["color"]), x=0),
-            "xaxis": dict(**PC["xaxis"], title="Health score", range=[0,105]),
-            "yaxis": dict(**PC["yaxis"], title="Leaving risk %", range=[0,105])
-        })
-        st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar":False})
-        
+        fig3.add_shape(type="rect", x0=70, x1=102, y0=0, y1=40,
+            fillcolor="rgba(63,185,80,0.06)", line=dict(color="#3fb950", width=1, dash="dot"))
+        fig3.add_shape(type="rect", x0=0, x1=102, y0=60, y1=102,
+            fillcolor="rgba(248,81,73,0.06)", line=dict(color="#f85149", width=1, dash="dot"))
+        fig3.add_annotation(x=86, y=38, text="Safe zone", showarrow=False,
+            font=dict(size=9, color="#3fb950"))
+        fig3.add_annotation(x=15, y=98, text="Danger zone", showarrow=False,
+            font=dict(size=9, color="#f85149"))
+        fig3.update_layout(
+            paper_bgcolor=PC["paper_bgcolor"],
+            plot_bgcolor=PC["plot_bgcolor"],
+            font=dict(family="Plus Jakarta Sans", color=PC["font"]["color"], size=10),
+            margin=dict(l=8, r=8, t=32, b=8),
+            showlegend=False,
+            title=dict(text="Health vs leaving risk · bubble = portfolio size", font=dict(size=12, color=PC["font"]["color"]), x=0),
+            xaxis=dict(showgrid=False, zeroline=False, color=PC["font"]["color"], tickfont=dict(size=9), title="Health score", range=[0,105]),
+            yaxis=dict(showgrid=True, gridcolor=PC["plot_bgcolor"], zeroline=False, color=PC["font"]["color"], tickfont=dict(size=9), title="Leaving risk %", range=[0,105]),
+            height=280
+        )
+        st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar":False})        
     # ── Tabs ──────────────────────────────────────────────────────────────────
     st.markdown('<div style="height:1rem"></div>', unsafe_allow_html=True)
     tab1,tab2,tab3,tab4,tab5 = st.tabs([
