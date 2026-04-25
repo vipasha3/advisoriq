@@ -5,8 +5,6 @@ import plotly.graph_objects as go
 import urllib.parse
 from io import BytesIO
 import secrets
-import database as db
-
 
 
 # ── Page config (MUST be first Streamlit call) ────────────────────────────────
@@ -1642,6 +1640,7 @@ def show_dashboard(clients):
 
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 def main():
+    import database as db 
     if "screen" not in st.session_state: st.session_state.screen = "login"
 
     # ✅ AUTO LOGIN USING TOKEN (MOVE HERE - TOP)
