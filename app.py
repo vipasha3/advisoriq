@@ -1073,11 +1073,12 @@ def show_dashboard(clients):
         key=lambda x: (x.get("score",0) + x.get("churn",0) + _num(x.get("portfolio",0))/1e6),
         reverse=True
     )
+    at_risk  = [c for c in clients if c.get("churn",0)>50]
     no_sip   = [c for c in clients if "No SIP" in c.get("flags",[])]
     no_nom   = [c for c in clients if "No Nominee" in c.get("flags",[])]
     hni      = [c for c in clients if "High Value" in c.get("flags",[])]
     risk_aum = sum(_num(c.get("portfolio",0)) for c in at_risk)
-
+    
     user     = st.session_state.get("user_name","")
     now      = now_ist()
     greeting = "Good morning" if now.hour<12 else ("Good afternoon" if now.hour<17 else "Good evening")
