@@ -1384,15 +1384,26 @@ def show_dashboard(clients):
             if is_exp:
                 sip_val = _fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "Not started"
                 insight = c.get("feature_importance", "No insight available")
+                wa_msg  = get_whatsapp_message(c)
+                ph      = c.get("phone","")
+                wl      = f"https://wa.me/{ph}?text={urllib.parse.quote(wa_msg)}" if ph else f"https://wa.me/?text={urllib.parse.quote(wa_msg)}"
+
                 st.markdown(
                     "<div class='xin' style='margin-bottom:8px'>"
-                    "<div class='xlbl'>\U0001f4a1 What this means</div>"
-                    "<div class='xtxt'>" + str(c.get("name","")) + " \u2192 " + insight + "</div>"
-                    "<div style='margin-top:8px;font-size:11px;color:var(--t3);font-family:DM Mono,monospace'>"
-                    "\U0001f4c5 Client since " + str(c.get("tenure","—")) +
-                    " \u00b7 \U0001f4cb Nominee filed: " + str(c.get("nominee","—")) +
-                    " \u00b7 \U0001f4b0 Monthly SIP: " + sip_val +
-                    "</div></div>",
+                    "<div class='xlbl'>💡 What this means</div>"
+                    "<div class='xtxt'>" + generate_client_explanation(c) + "</div>"
+                    "<div style='margin-top:8px;font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace'>"
+                    "📅 Client since " + str(c.get("tenure","—")) +
+                    " · 📋 Nominee: " + str(c.get("nominee","—")) +
+                    " · 💰 SIP: " + sip_val +
+                    "</div>"
+                    "<div style='margin-top:10px;background:var(--s3);border-radius:6px;padding:.75rem;font-size:12px;color:var(--t2);font-style:italic'>"
+                    "📱 Suggested message: \"" + wa_msg + "\"</div>"
+                    "<div style='display:flex;gap:8px;margin-top:10px'>"
+                    "<a href='" + wl + "' target='_blank' style='font-size:12px;padding:5px 14px;border-radius:6px;font-weight:500;background:rgba(37,211,102,.1);color:#25d366;border:1px solid rgba(37,211,102,.3);text-decoration:none;font-family:JetBrains Mono,monospace'>💬 WhatsApp</a>"
+                    "<a href='tel:" + str(ph) + "' style='font-size:12px;padding:5px 14px;border-radius:6px;font-weight:500;background:var(--blbg);color:var(--bl);border:1px solid var(--blbd);text-decoration:none;font-family:JetBrains Mono,monospace'>📞 Call</a>"
+                    "</div>"
+                    "</div>",
                     unsafe_allow_html=True
                 )
 
@@ -1446,7 +1457,7 @@ def show_dashboard(clients):
               <div class="abtns"><a class="btn-wa" href="{wl}" target="_blank">Open WhatsApp \u2197</a></div>
             </div>""", unsafe_allow_html=True)
 
-    # TAB 3 ── Event Intelligence
+
     # TAB 3 ── Event Intelligence
     with tab3:
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
@@ -1489,7 +1500,7 @@ def show_dashboard(clients):
     # TAB 4 ── ML Prediction Engine
     with tab4:
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="mhd"><div class="mic mpu">\u25c8</div><div><div class="mtitle">ML Prediction Engine</div><div class="msub">Ensemble model \u00b7 Churn prediction \u00b7 Revenue forecasting \u00b7 Confidence intervals</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="mhd"><div class="mic mpu">◈</div><div><div class="mtitle">Client Lifetime Value Prediction</div><div class="msub">Estimated 5-year revenue per client · Churn impact · Priority score</div></div></div>', unsafe_allow_html=True)
         if "ml_exp" not in st.session_state: st.session_state.ml_exp = None
         st.markdown('<div class="mlhdr"><span>Account</span><span>Score \u0394</span><span>Churn risk</span><span>Conv. prob</span><span>Predicted rev.</span><span>Trend</span></div>', unsafe_allow_html=True)
         for i,c in enumerate(clients[:15]):
@@ -1498,7 +1509,13 @@ def show_dashboard(clients):
             trend   = "Ascending" if sc>=60 else ("Stable" if sc>=45 else "Declining")
             tcls    = "tup" if trend=="Ascending" else ("tdn" if trend=="Declining" else "tsb")
             conf    = random.randint(85,94)
-            pred_rev= round(_num(c.get("portfolio",0))*1.12)
+    
+            # 5-year LTV estimate
+            port_v  = _num(c.get("portfolio",0))
+            sip_v   = _num(c.get("sip",0))
+            ltv     = round((port_v * 0.01) + (sip_v * 12 * 5 * 0.01))
+            ltv_loss= round(ltv * ch / 100)
+            pred_rev= ltv
             chcol   = "#f85149" if ch>50 else ("#d29922" if ch>25 else "#3fb950")
             cvcol   = "#3fb950" if cv>60 else ("#d29922" if cv>40 else "#f85149")
             is_me   = st.session_state.ml_exp==i
@@ -1507,7 +1524,7 @@ def show_dashboard(clients):
               <span style="font-family:'DM Mono',monospace;font-size:11px;color:#3fb950">{dlo}\u2192{dhi}</span>
               <span style="font-family:'DM Mono',monospace;font-size:11px;color:{chcol}">{ch}%</span>
               <span style="font-family:'DM Mono',monospace;font-size:11px;color:{cvcol}">{cv}%</span>
-              <span style="font-family:'DM Mono',monospace;font-size:12px">\u20b9{pred_rev:,}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px">₹{pred_rev:,}<br><span style="font-size:10px;color:var(--rd)">-₹{ltv_loss:,} if lost</span></span>
               <span><span class="{tcls}">\u2197 {trend}</span>
                 <span class="cbr" style="margin-left:6px">
                 <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--t2)">{conf}%</span>
