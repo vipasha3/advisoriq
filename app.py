@@ -735,13 +735,12 @@ def show_login():
     with col:
         st.markdown("""<div style="text-align:center;margin-top:3rem;margin-bottom:2rem">
           <div style="width:48px;height:48px;background:var(--gr);border-radius:10px;
-            display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:#000;margin-bottom:.875rem">\u26a1</div>
-            
+            display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:#000;margin-bottom:.875rem">⚡</div>
           <div style="font-size:1.3rem;font-weight:600;letter-spacing:-.3px;color:var(--tx)">AdvisorIQ</div>
           <div style="font-size:13px;color:var(--t2);margin-top:4px">Prioritize clients · Prevent churn · Grow revenue</div>
           <div style="font-size:12px;background:var(--grbg);color:var(--gr);border:1px solid var(--grbd);border-radius:6px;padding:6px 12px;margin-top:10px;font-family:'JetBrains Mono',monospace">AI-powered client intelligence for financial advisors</div>
-          
         </div>""", unsafe_allow_html=True)
+        
         t1,t2 = st.tabs(["Sign in","Create account"])
         with t1:
             st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
