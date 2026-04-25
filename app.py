@@ -936,7 +936,7 @@ def show_mapping(df):
                     merged = 0
             st.session_state.clients = clients
             st.session_state.merged_count = merged
-            if DB_OK:
+            if DB_OK and st.session_state.get("user_id"):
                 db.save_clients(st.session_state.user_id, clients)
             st.session_state.screen = "dashboard"; st.rerun()
     with c2:
