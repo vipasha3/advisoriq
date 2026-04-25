@@ -372,36 +372,36 @@ def get_theme_css():
 
     if theme == "light":
         vars_css = """
-  --bg:#f4f6fb;
+  --bg:#eef1f7;
   --s1:#ffffff;
-  --s2:#f1f4f9;
-  --s3:#e8edf5;
-  --bd:#dde3ed;
-  --bd2:#c8d0de;
+  --s2:#f5f7fc;
+  --s3:#eaecf4;
+  --bd:#d0d7e8;
+  --bd2:#b8c4d8;
   --tx:#0f172a;
-  --t2:#4a5568;
-  --t3:#94a3b8;
-  --gr:#16a34a;
-  --grbg:rgba(22,163,74,.09);
-  --grbd:rgba(22,163,74,.28);
-  --am:#d97706;
-  --ambg:rgba(217,119,6,.09);
-  --ambd:rgba(217,119,6,.28);
-  --rd:#dc2626;
-  --rdbg:rgba(220,38,38,.09);
-  --rdbd:rgba(220,38,38,.28);
-  --bl:#2563eb;
-  --blbg:rgba(37,99,235,.09);
-  --blbd:rgba(37,99,235,.28);
-  --pu:#7c3aed;
-  --pubg:rgba(124,58,237,.09);
-  --pubd:rgba(124,58,237,.28);
+  --t2:#374151;
+  --t3:#6b7280;
+  --gr:#15803d;
+  --grbg:rgba(21,128,61,.08);
+  --grbd:rgba(21,128,61,.25);
+  --am:#b45309;
+  --ambg:rgba(180,83,9,.08);
+  --ambd:rgba(180,83,9,.25);
+  --rd:#b91c1c;
+  --rdbg:rgba(185,28,28,.08);
+  --rdbd:rgba(185,28,28,.25);
+  --bl:#1d4ed8;
+  --blbg:rgba(29,78,216,.08);
+  --blbd:rgba(29,78,216,.25);
+  --pu:#6d28d9;
+  --pubg:rgba(109,40,217,.08);
+  --pubd:rgba(109,40,217,.25);
 """
-        plotly_bg = "#f4f6fb"
+        plotly_bg = "#f5f7fc"
         plotly_paper = "#ffffff"
-        plotly_grid = "#e8edf5"
-        plotly_font = "#4a5568"
-        plotly_line = "#dde3ed"
+        plotly_grid = "#e2e8f0"
+        plotly_font = "#374151"
+        plotly_line = "#d0d7e8"
     else:
         vars_css = """
   --bg:#0d1117;
@@ -453,8 +453,7 @@ html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color
 [data-testid=stHeader],[data-testid=stDecoration],footer{{display:none!important}}
 [data-testid=stSidebar]{{background:var(--s1)!important;border-right:1px solid var(--bd)!important}}
 .block-container{{padding:0!important;max-width:100%!important}}
-
-.nav{{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:200}}
+.nav{{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:200;box-shadow:0 1px 8px rgba(0,0,0,.06)}}
 .nav-logo{{display:flex;align-items:center;gap:10px}}
 .nav-icon{{width:30px;height:30px;background:var(--gr);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#000}}
 .nav-brand{{font-size:15px;font-weight:500;color:var(--tx)}}.nav-brand em{{color:var(--gr);font-style:normal}}
@@ -463,7 +462,7 @@ html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color
 .nav-role{{font-size:11px;padding:2px 8px;border-radius:12px;background:var(--grbg);color:var(--gr);border:1px solid var(--grbd);font-weight:500}}
 .bc{{padding:8px 1.5rem;background:var(--s1);border-bottom:1px solid var(--bd);font-size:12px;color:var(--t3);font-family:'DM Mono',monospace}}.bc em{{color:var(--bl);font-style:normal}}
 .wrap{{padding:1.5rem;max-width:1440px;margin:0 auto}}
-.greet{{display:flex;align-items:center;justify-content:space-between;background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1.5rem}}
+.greet{{display:flex;align-items:center;justify-content:space-between;background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}}
 .gt{{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gr);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}}
 .gn{{font-size:1.4rem;font-weight:500;letter-spacing:-.3px;margin-bottom:4px}}
 .gsub{{font-size:13px;color:var(--t2)}}
@@ -472,7 +471,7 @@ html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color
 .gnum{{font-size:1.4rem;font-weight:600;display:block}}
 .glbl{{font-size:11px;color:var(--t2);margin-top:2px;display:block}}
 .kgrid{{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:.5rem}}
-.kc{{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.1rem 1.3rem;position:relative;overflow:hidden;transition:border-color .15s,transform .15s}}
+.kc{{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.1rem 1.3rem;position:relative;overflow:hidden;transition:border-color .15s,transform .15s;box-shadow:0 1px 4px rgba(0,0,0,.06)}}
 .kc:hover{{border-color:var(--bd2);transform:translateY(-2px)}}
 .kc::before{{content:'';position:absolute;top:0;left:0;right:0;height:2px}}
 .kc.gr::before{{background:var(--gr)}}.kc.bl::before{{background:var(--bl)}}.kc.rd::before{{background:var(--rd)}}.kc.am::before{{background:var(--am)}}.kc.pu::before{{background:var(--pu)}}
@@ -508,7 +507,7 @@ html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color
 .chm{{background:var(--ambg);color:var(--am);border:1px solid var(--ambd)}}
 .chl{{background:var(--rdbg);color:var(--rd);border:1px solid var(--rdbd)}}
 .tag{{font-size:10px;padding:2px 7px;border-radius:8px;display:inline-block;margin-right:3px;background:var(--s3);color:var(--t2);border:1px solid var(--bd);font-family:'DM Mono',monospace}}
-.acard{{border:1px solid var(--bd);border-radius:8px;padding:1.25rem;margin-bottom:16px;background:var(--s2)}}
+.acard{{border:1px solid var(--bd);border-radius:8px;padding:1.25rem;margin-bottom:16px;background:var(--s1);box-shadow:0 1px 3px rgba(0,0,0,.05)}}
 .acard:hover{{border-color:var(--bd2)}}
 .atop{{display:flex;align-items:flex-start;gap:10px;margin-bottom:.875rem}}
 .abadge{{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;flex-shrink:0;margin-top:2px;font-family:'DM Mono',monospace;text-transform:uppercase}}
