@@ -947,7 +947,7 @@ def show_upload():
     return uploaded
 
 # ── MAPPING ───────────────────────────────────────────────────────────────────
-ddef show_mapping(df):
+def show_mapping(df):
     show_nav()
     st.markdown('<div class="bc">Upload → <em>Column mapping</em> → Dashboard</div>', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
