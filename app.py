@@ -441,6 +441,9 @@ def get_theme_css():
     st.session_state["plotly_font"] = plotly_font
     st.session_state["plotly_line"] = plotly_line
 
+    bg_color = "#e3e8f4" if theme == "light" else "#0d1117"
+    s1_color = "#ffffff" if theme == "light" else "#161b22"
+
     return f"""<style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -448,8 +451,31 @@ def get_theme_css():
 {vars_css}
 }}
 
+html, body {{
+  background-color: {bg_color} !important;
+}}
+[data-testid="stAppViewContainer"] {{
+  background-color: {bg_color} !important;
+}}
+[data-testid="stAppViewBlockContainer"] {{
+  background-color: {bg_color} !important;
+}}
+.main {{
+  background-color: {bg_color} !important;
+}}
+.main > div {{
+  background-color: {bg_color} !important;
+}}
+section.main > div.block-container {{
+  background-color: {bg_color} !important;
+}}
+[data-testid="stVerticalBlock"] {{
+  background-color: transparent !important;
+}}
+
 *{{box-sizing:border-box}}
-html,body,[data-testid=stAppViewContainer],[data-testid=stAppViewBlockContainer],[data-testid=block-container]{{background:var(--bg)!important;color:var(--tx)!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-feature-settings:'cv02','cv03','cv04','cv11';-webkit-font-smoothing:antialiased}}
+html,body,[data-testid=stAppViewContainer],[data-testid=stAppViewBlockContainer],[data-testid=block-container]{{background-color:{bg_color}!important;color:var(--tx)!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-feature-settings:'cv02','cv03','cv04','cv11';-webkit-font-smoothing:antialiased}}
+
 .main{{background:var(--bg)!important}}
 .main .block-container{{background:var(--bg)!important}}
 section[data-testid=stSidebar]{{background:var(--s1)!important}}
