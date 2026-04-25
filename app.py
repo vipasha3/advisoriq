@@ -84,30 +84,31 @@ def get_next_action(c):
     churn = c.get("churn", 0)
     port  = _num(c.get("portfolio", 0))
     sip   = _num(c.get("sip", 0))
+    name  = c.get("name", "Client").split()[0]
 
     if "Inactive 6m+" in flags and port > 2e6:
-        return "📞 Call immediately — high value, gone quiet"
+        return f"📞 Call {name} today — {_fi(port)} at risk"
     elif "Inactive 6m+" in flags:
-        return "💬 WhatsApp check-in"
+        return f"💬 WhatsApp {name} — gone quiet"
     elif "Leaving Risk" in flags and churn > 70:
-        return "🚨 Urgent call — leaving risk"
+        return f"🚨 Urgent — {name} may leave this month"
     elif "No Nominee" in flags and "No SIP" in flags:
-        return "📋 Fix nominee + start SIP"
+        return f"📋 Fix nominee + SIP for {name}"
     elif "No SIP" in flags and port > 1e6:
-        return "💰 Pitch SIP — strong upsell"
+        return f"💰 Pitch SIP to {name} — {_fi(port)} idle"
     elif "No SIP" in flags:
-        return "💰 Suggest SIP plan"
+        return f"💰 Start SIP conversation with {name}"
     elif "No Nominee" in flags:
-        return "📄 Update nominee form"
+        return f"📄 Get nominee filed for {name}"
     elif score > 80 and sip > 10000:
-        return "⭐ Ask for referral"
+        return f"⭐ Ask {name} for referral"
     elif score > 70:
-        return "📈 Upsell opportunity"
+        return f"📈 Upsell {name} — client is ready"
     elif churn > 40:
-        return "📞 Re-engage before they leave"
+        return f"📞 Re-engage {name} before they leave"
     else:
-        return "📩 Regular follow-up"
-
+        return f"📩 Follow up with {name} this week"
+        
 def get_whatsapp_message(c):
     flags = c.get("flags", [])
     name  = c.get("name", "")
@@ -239,6 +240,44 @@ def auto_map_columns(cols):
                 if h in cl: mapping[field]=c; break
             if field in mapping: break
     return mapping
+
+def clean_dataframe(df):
+    df = df.copy()
+    
+    # Remove completely empty rows
+    df = df.dropna(how="all")
+    
+    # Strip whitespace from all string columns
+    for col in df.select_dtypes(include="object").columns:
+        df[col] = df[col].astype(str).str.strip()
+        df[col] = df[col].replace({"nan":"","None":"","NaT":"","-":"","N/A":"","n/a":""})
+    
+    # Safe numeric conversion
+    for col in df.columns:
+        cl = col.lower().replace(" ","").replace("_","")
+        if any(h in cl for h in ["portfolio","aum","value","sip","monthly","amount","total"]):
+            df[col] = df[col].astype(str).str.replace(",","").str.replace("₹","").str.replace(" ","")
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+    
+    # Remove rows where name is blank/unknown
+    if "name" in df.columns or any("name" in c.lower() for c in df.columns):
+        name_col = next((c for c in df.columns if "name" in c.lower()), None)
+        if name_col:
+            df = df[df[name_col].astype(str).str.len() > 1]
+    
+    # Remove duplicates — keep last entry
+    dup_cols = []
+    for col in df.columns:
+        cl = col.lower().replace(" ","")
+        if "name" in cl or "phone" in cl or "mobile" in cl:
+            dup_cols.append(col)
+    if dup_cols:
+        before = len(df)
+        df = df.drop_duplicates(subset=dup_cols, keep="last")
+        df.attrs["dupes_removed"] = before - len(df)
+    
+    df.attrs["cleaned"] = True
+    return df
 
 def process_dataframe(df, mapping):
     defaults={"name":"","age":"","portfolio":"0","sip":"0","lastContact":"",
@@ -874,7 +913,19 @@ def show_upload():
             st.session_state.use_demo = True; st.session_state.screen = "map"; st.rerun()
 
         if SHEETS_OK:
-            st.markdown("<div style='text-align:center;font-size:12px;color:var(--t2);margin:.75rem 0 .5rem'>\u2014 or connect Google Sheets \u2014</div>", unsafe_allow_html=True)
+            st.markdown("""
+            <div style='background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:.875rem 1rem;margin-top:.75rem;font-size:12px;color:var(--t2)'>
+            <div style='font-weight:600;color:var(--tx);margin-bottom:.5rem'>Recommended columns</div>
+            <div style='display:grid;grid-template-columns:1fr 1fr;gap:4px'>
+            <span>✔ Client Name</span><span>✔ Portfolio / AUM</span>
+            <span>✔ Monthly SIP</span><span>✔ Last Contact Date</span>
+            <span>✔ Phone Number</span><span>✔ Nominee (Yes/No)</span>
+            </div>
+            <div style='font-size:11px;color:var(--t3);margin-top:.5rem'>Any format accepted · Auto-detected · Excel or CSV</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            
             sheets_url = st.text_input("", placeholder="https://docs.google.com/spreadsheets/d/...", label_visibility="collapsed", key="sheets_url_input")
             if st.button("Connect Google Sheets \u2192", use_container_width=True, key="connect_sheets"):
                 if sheets_url.strip():
@@ -896,12 +947,31 @@ def show_upload():
     return uploaded
 
 # ── MAPPING ───────────────────────────────────────────────────────────────────
-def show_mapping(df):
+ddef show_mapping(df):
     show_nav()
-    st.markdown('<div class="bc">Upload \u2192 <em>Column mapping</em> \u2192 Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="bc">Upload → <em>Column mapping</em> → Dashboard</div>', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
+
+    # ── Data cleaning ─────────────────────────────────────────────────────
+    original_len = len(df)
+    df = clean_dataframe(df)
+    cleaned_len  = len(df)
+    dupes        = df.attrs.get("dupes_removed", original_len - cleaned_len)
+    missing      = df.isnull().sum().sum()
+
+    if dupes > 0 or missing > 0:
+        st.markdown(
+            "<div style='background:var(--ambg);border:1px solid var(--ambd);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:var(--am)'>"
+            "⚠ Data cleaned before processing — "
+            + (f"{dupes} duplicate rows removed" if dupes > 0 else "") +
+            (" · " if dupes > 0 and missing > 0 else "") +
+            (f"{int(missing)} missing values filled" if missing > 0 else "") +
+            "</div>",
+            unsafe_allow_html=True
+        )
+
     st.markdown("### Map your columns")
-    st.caption("Auto-detected where possible \u2014 adjust if needed.")
+    st.caption("Auto-detected where possible — adjust if needed.")
     cols = df.columns.tolist()
     mapping = auto_map_columns(cols) if SCORING_OK else {}
     field_labels = {
@@ -1106,6 +1176,38 @@ def show_dashboard(clients):
         <div class="gst"><span class="gnum" style="color:var(--tx)">{_fi(aum)}</span><span class="glbl">Total AUM</span></div>
       </div>
     </div>""", unsafe_allow_html=True)
+
+    # Data Health Score
+    total_fields = len(clients) * 7  # 7 key fields per client
+    filled = sum(
+        (1 if c.get("name") else 0) +
+        (1 if _num(c.get("portfolio",0)) > 0 else 0) +
+        (1 if _num(c.get("sip",0)) >= 0 else 0) +
+        (1 if c.get("lastContact","") not in ("","nan","None") else 0) +
+        (1 if c.get("phone","") not in ("","nan") else 0) +
+        (1 if c.get("nominee","") not in ("","nan") else 0) +
+        (1 if c.get("goal","") not in ("","nan") else 0)
+        for c in clients
+    )
+    dq = round(filled / max(total_fields, 1) * 100)
+    dq_col = "var(--gr)" if dq >= 80 else ("var(--am)" if dq >= 60 else "var(--rd)")
+    missing_fields = total_fields - filled
+
+    st.markdown(
+        "<div style='background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:.75rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between'>"
+        "<div style='display:flex;align-items:center;gap:10px'>"
+        "<div style='font-size:11px;color:var(--t2);font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.06em'>📊 Data Quality</div>"
+        "<div style='font-size:1.1rem;font-weight:700;color:" + dq_col + "'>" + str(dq) + "%</div>"
+        "<div style='width:80px;height:4px;background:var(--bd2);border-radius:2px;overflow:hidden'>"
+        "<div style='height:100%;width:" + str(dq) + "%;background:" + dq_col + ";border-radius:2px'></div>"
+        "</div>"
+        "</div>"
+        "<div style='font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace'>"
+        + str(len(clients)) + " clients · " + str(missing_fields) + " fields incomplete"
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True
+    )
 
     # WOW banner
     critical = [c for c in clients if c.get("churn",0)>60 and _num(c.get("portfolio",0))>1e6]
