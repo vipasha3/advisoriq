@@ -1685,7 +1685,8 @@ def main():
                 if ML_OK:
                     clients = predict_batch(clients)
             st.session_state.clients = clients
-            if DB_OK: db.save_clients(st.session_state.user_id, clients)
+            if DB_OK and st.session_state.get("user_id"):
+                db.save_clients(st.session_state.user_id, clients)
             st.session_state.use_demo  = False
             st.session_state.screen    = "dashboard"; st.rerun()
         elif st.session_state.get("use_sheets") and st.session_state.get("sheets_url"):
