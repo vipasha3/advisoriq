@@ -372,10 +372,10 @@ def get_theme_css():
 
     if theme == "light":
         vars_css = """
-  --bg:#eef1f7;
+  --bg:#e3e8f4;
   --s1:#ffffff;
-  --s2:#f5f7fc;
-  --s3:#eaecf4;
+  --s2:#edf0f9;
+  --s3:#dce3f0;
   --bd:#d0d7e8;
   --bd2:#b8c4d8;
   --tx:#0f172a;
@@ -397,7 +397,7 @@ def get_theme_css():
   --pubg:rgba(109,40,217,.08);
   --pubd:rgba(109,40,217,.25);
 """
-        plotly_bg = "#f5f7fc"
+        plotly_bg = "#edf0f9"
         plotly_paper = "#ffffff"
         plotly_grid = "#e2e8f0"
         plotly_font = "#374151"
@@ -449,7 +449,10 @@ def get_theme_css():
 }}
 
 *{{box-sizing:border-box}}
-html,body,[data-testid=stAppViewContainer]{{background:var(--bg)!important;color:var(--tx)!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-feature-settings:'cv02','cv03','cv04','cv11';-webkit-font-smoothing:antialiased}}
+html,body,[data-testid=stAppViewContainer],[data-testid=stAppViewBlockContainer],[data-testid=block-container]{{background:var(--bg)!important;color:var(--tx)!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-feature-settings:'cv02','cv03','cv04','cv11';-webkit-font-smoothing:antialiased}}
+.main{{background:var(--bg)!important}}
+.main .block-container{{background:var(--bg)!important}}
+section[data-testid=stSidebar]{{background:var(--s1)!important}}
 [data-testid=stHeader],[data-testid=stDecoration],footer{{display:none!important}}
 [data-testid=stSidebar]{{background:var(--s1)!important;border-right:1px solid var(--bd)!important}}
 .block-container{{padding:0!important;max-width:100%!important}}
