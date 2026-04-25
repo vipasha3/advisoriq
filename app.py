@@ -46,49 +46,90 @@ def convert_to_business_language(score):
 
 # 👇 ADD NEW FUNCTION HERE (DON'T REPLACE ABOVE)
 def generate_client_explanation(c):
-    name = c.get("name", "This client")
-    score = c.get("score", 0)
-    churn = c.get("churn", 0)
+    name  = c.get("name", "This client")
     flags = c.get("flags", [])
+    churn = c.get("churn", 0)
+    port  = _num(c.get("portfolio", 0))
+    sip   = _num(c.get("sip", 0))
 
-    if score >= 70:
-        risk = "high-value and responsive"
-    elif score >= 45:
-        risk = "moderately engaged"
+    parts = []
+
+    if port > 5e6:
+        parts.append("holds significant investment value — retention is critical")
+    elif port > 1e6:
+        parts.append("has a meaningful portfolio worth protecting")
     else:
-        risk = "low engagement"
+        parts.append("is an early-stage client with growth potential")
 
-    if churn > 60:
-        churn_text = "may stop engaging soon"
-    elif churn > 30:
-        churn_text = "could become inactive"
-    else:
-        churn_text = "is currently stable"
-
-    reasons = []
-    if "No SIP" in flags:
-        reasons.append("no regular investment activity")
+    if "Inactive 6m+" in flags:
+        parts.append("has not been contacted in over 6 months")
+    if "No SIP" in flags and port > 5e5:
+        parts.append("has no monthly SIP despite a good portfolio — easy upsell")
     if "No Nominee" in flags:
-        reasons.append("important details are incomplete")
-    if "High Value" in flags:
-        reasons.append("has a high portfolio value")
+        parts.append("nominee form is missing — compliance risk for their family")
+    if churn > 60:
+        parts.append("showing strong signs of switching advisors soon")
+    elif churn > 30:
+        parts.append("engagement is weakening — needs attention")
 
-    if not reasons:
-        reasons.append("recent activity patterns")
+    if not parts:
+        parts.append("profile is stable with no immediate concerns")
 
-    explanation = f"{name} is {risk} and {churn_text}. This is mainly because of {', '.join(reasons)}."
-
-    return explanation
+    return name + " " + ", and ".join(parts[:2]) + "."
 
 def get_next_action(c):
-    if c.get("churn", 0) > 60:
-        return "📞 Call immediately"
-    elif "No SIP" in c.get("flags", []):
+    flags = c.get("flags", [])
+    score = c.get("score", 0)
+    churn = c.get("churn", 0)
+    port  = _num(c.get("portfolio", 0))
+    sip   = _num(c.get("sip", 0))
+
+    if "Inactive 6m+" in flags and port > 2e6:
+        return "📞 Call immediately — high value, gone quiet"
+    elif "Inactive 6m+" in flags:
+        return "💬 WhatsApp check-in"
+    elif "Leaving Risk" in flags and churn > 70:
+        return "🚨 Urgent call — leaving risk"
+    elif "No Nominee" in flags and "No SIP" in flags:
+        return "📋 Fix nominee + start SIP"
+    elif "No SIP" in flags and port > 1e6:
+        return "💰 Pitch SIP — strong upsell"
+    elif "No SIP" in flags:
         return "💰 Suggest SIP plan"
-    elif c.get("score", 0) > 70:
-        return "📲 Send personalized message"
+    elif "No Nominee" in flags:
+        return "📄 Update nominee form"
+    elif score > 80 and sip > 10000:
+        return "⭐ Ask for referral"
+    elif score > 70:
+        return "📈 Upsell opportunity"
+    elif churn > 40:
+        return "📞 Re-engage before they leave"
     else:
         return "📩 Regular follow-up"
+
+def get_whatsapp_message(c):
+    flags = c.get("flags", [])
+    name  = c.get("name", "")
+    first = name.split()[0] if name else "there"
+    port  = _num(c.get("portfolio", 0))
+    churn = c.get("churn", 0)
+    score = c.get("score", 0)
+    sip   = _num(c.get("sip", 0))
+
+    if "Inactive 6m+" in flags and port > 2e6:
+        return f"Hi {first}! I have been reviewing your portfolio and wanted to personally check in. Your investments deserve attention — can we connect for 15 minutes this week?"
+    elif "Leaving Risk" in flags or churn > 60:
+        return f"Hi {first}! It has been a while and I want to make sure your portfolio is on track. A quick 10-minute call could make a real difference — when works for you?"
+    elif "No SIP" in flags and port > 5e5:
+        return f"Hi {first}! Based on your portfolio, I have prepared a personalised SIP plan that could significantly grow your wealth. Can I share the numbers with you?"
+    elif "No Nominee" in flags:
+        return f"Hi {first}! Quick reminder — your nominee details need updating. This protects your family and takes under 10 minutes. Can I help sort this out?"
+    elif score > 80 and sip > 10000:
+        return f"Hi {first}! Your portfolio is performing really well. If you know anyone who could benefit from similar advice, I would love an introduction. Happy to offer them a free review!"
+    elif score > 70:
+        return f"Hi {first}! I have some exciting investment ideas that match your profile perfectly. Can we connect briefly this week?"
+    else:
+        return f"Hi {first}! Just checking in to see how you are doing and if there is anything I can help with regarding your investments."
 
 
 
@@ -695,8 +736,11 @@ def show_login():
         st.markdown("""<div style="text-align:center;margin-top:3rem;margin-bottom:2rem">
           <div style="width:48px;height:48px;background:var(--gr);border-radius:10px;
             display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:#000;margin-bottom:.875rem">\u26a1</div>
+            
           <div style="font-size:1.3rem;font-weight:600;letter-spacing:-.3px;color:var(--tx)">AdvisorIQ</div>
-          <div style="font-size:13px;color:var(--t2);margin-top:4px">Portfolio intelligence platform</div>
+          <div style="font-size:13px;color:var(--t2);margin-top:4px">Prioritize clients · Prevent churn · Grow revenue</div>
+          <div style="font-size:12px;background:var(--grbg);color:var(--gr);border:1px solid var(--grbd);border-radius:6px;padding:6px 12px;margin-top:10px;font-family:'JetBrains Mono',monospace">AI-powered client intelligence for financial advisors</div>
+          
         </div>""", unsafe_allow_html=True)
         t1,t2 = st.tabs(["Sign in","Create account"])
         with t1:
@@ -798,9 +842,26 @@ def show_upload():
         st.markdown("<hr>", unsafe_allow_html=True)
 
     st.markdown("""<div class="uph">
-      <div class="upey">\u26a1 Intelligence Engine</div>
+      <div class="upey">⚡ Intelligence Engine</div>
       <div class="upt">Your clients,<br><em>clearly ranked.</em></div>
-      <div class="ups">Upload any Excel or CSV \u2014 or connect Google Sheets for automatic daily sync. The engine scores every client and tells you exactly who to call.</div>
+      <div class="ups">Upload your client data and get instant AI-powered insights — who to call, who is leaving, and where the money is.</div>
+    </div>
+    <div style="display:flex;gap:16px;justify-content:center;margin-bottom:2rem">
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1rem 1.5rem;text-align:center;min-width:160px">
+        <div style="font-size:1.5rem;margin-bottom:6px">📂</div>
+        <div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:4px">Step 1</div>
+        <div style="font-size:12px;color:var(--t2)">Upload your<br>client Excel or CSV</div>
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1rem 1.5rem;text-align:center;min-width:160px">
+        <div style="font-size:1.5rem;margin-bottom:6px">🧠</div>
+        <div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:4px">Step 2</div>
+        <div style="font-size:12px;color:var(--t2)">AI scores every<br>client instantly</div>
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1rem 1.5rem;text-align:center;min-width:160px">
+        <div style="font-size:1.5rem;margin-bottom:6px">📞</div>
+        <div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:4px">Step 3</div>
+        <div style="font-size:12px;color:var(--t2)">Know exactly<br>who to call today</div>
+      </div>
     </div>""", unsafe_allow_html=True)
 
     _,cc,_ = st.columns([1,2,1])
@@ -1008,8 +1069,11 @@ def show_dashboard(clients):
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     aum      = sum(_num(c.get("portfolio",0)) for c in clients)
-    high     = [c for c in clients if c.get("priority")=="High"]
-    at_risk  = [c for c in clients if c.get("churn",0)>50]
+    high     = sorted(
+        [c for c in clients if c.get("priority")=="High"],
+        key=lambda x: (x.get("score",0) + x.get("churn",0) + _num(x.get("portfolio",0))/1e6),
+        reverse=True
+    )
     no_sip   = [c for c in clients if "No SIP" in c.get("flags",[])]
     no_nom   = [c for c in clients if "No Nominee" in c.get("flags",[])]
     hni      = [c for c in clients if "High Value" in c.get("flags",[])]
@@ -1041,6 +1105,50 @@ def show_dashboard(clients):
         <div class="gst"><span class="gnum" style="color:var(--tx)">{_fi(aum)}</span><span class="glbl">Total AUM</span></div>
       </div>
     </div>""", unsafe_allow_html=True)
+
+    # WOW banner
+    critical = [c for c in clients if c.get("churn",0)>60 and _num(c.get("portfolio",0))>1e6]
+    if critical:
+        critical_aum = sum(_num(c.get("portfolio",0)) for c in critical)
+        critical_names = ", ".join(c.get("name","") for c in critical[:3])
+        st.markdown(
+            "<div style='background:linear-gradient(135deg,rgba(248,81,73,.15),rgba(210,153,34,.1));border:1px solid var(--rdbd);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:12px'>"
+            "<div style='font-size:1.5rem'>🔥</div>"
+            "<div>"
+            "<div style='font-size:14px;font-weight:600;color:var(--tx);margin-bottom:3px'>"
+            + str(len(critical)) + " high-value clients may leave this month — potential loss "
+            + _fi(critical_aum * 0.08) + "</div>"
+            "<div style='font-size:12px;color:var(--t2)'>"
+            + critical_names + " — call them before end of week</div>"
+            "</div>"
+            "</div>",
+            unsafe_allow_html=True
+        )
+
+    upsell_clients = [c for c in clients if c.get("score",0)>70 and _num(c.get("sip",0))==0]
+    potential_rev  = sum(_num(c.get("portfolio",0)) for c in at_risk) * 0.08
+    upsell_rev     = sum(_num(c.get("portfolio",0)) for c in upsell_clients) * 0.03
+
+    st.markdown(
+        "<div style='display:flex;gap:12px;margin-bottom:1rem'>"
+        "<div style='flex:1;background:var(--rdbg);border:1px solid var(--rdbd);border-radius:8px;padding:.875rem 1rem'>"
+        "<div style='font-size:11px;color:var(--rd);font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px'>⚠ Revenue at risk</div>"
+        "<div style='font-size:1.3rem;font-weight:600;color:var(--tx)'>" + _fi(potential_rev) + "</div>"
+        "<div style='font-size:11px;color:var(--t2);margin-top:2px'>From " + str(len(at_risk)) + " clients who may leave</div>"
+        "</div>"
+        "<div style='flex:1;background:var(--grbg);border:1px solid var(--grbd);border-radius:8px;padding:.875rem 1rem'>"
+        "<div style='font-size:11px;color:var(--gr);font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px'>💰 Upsell opportunity</div>"
+        "<div style='font-size:1.3rem;font-weight:600;color:var(--tx)'>" + _fi(upsell_rev) + "</div>"
+        "<div style='font-size:11px;color:var(--t2);margin-top:2px'>From " + str(len(upsell_clients)) + " clients ready for SIP</div>"
+        "</div>"
+        "<div style='flex:1;background:var(--blbg);border:1px solid var(--blbd);border-radius:8px;padding:.875rem 1rem'>"
+        "<div style='font-size:11px;color:var(--bl);font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px'>📈 Clients to act on today</div>"
+        "<div style='font-size:1.3rem;font-weight:600;color:var(--tx)'>" + str(len(high)) + "</div>"
+        "<div style='font-size:11px;color:var(--t2);margin-top:2px'>Scored 70+ · Call these first</div>"
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True
+    )
 
     st.markdown(f"""<div class="kgrid">
       <div class="kc gr"><div class="kl">Total AUM</div><div class="knum">{_fi(aum)}</div>
