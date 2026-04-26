@@ -12,7 +12,7 @@ st.set_page_config(
     page_title="AdvisorIQ",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 
@@ -422,12 +422,13 @@ def get_theme_css():
   --rd:#f85149;
   --rdbg:rgba(248,81,73,.1);
   --rdbd:rgba(248,81,73,.3);
-  --bl:#58a6ff;
-  --blbg:rgba(88,166,255,.1);
-  --blbd:rgba(88,166,255,.3);
-  --pu:#a371f7;
-  --pubg:rgba(163,113,247,.1);
-  --pubd:rgba(163,113,247,.3);
+ --bl:#a371f7;
+  --blbg:rgba(163,113,247,.12);
+  --blbd:rgba(163,113,247,.35);
+  --pu:#7c3aed;
+  --pubg:rgba(124,58,237,.12);
+  --pubd:rgba(124,58,237,.35);
+  --accent:#6d28d9;
 """
         plotly_bg = "#0d1117"
         plotly_paper = "#161b22"
@@ -482,7 +483,23 @@ section[data-testid=stSidebar]{{background:var(--s1)!important}}
 [data-testid=stHeader],[data-testid=stDecoration],footer{{display:none!important}}
 [data-testid=stSidebar]{{background:var(--s1)!important;border-right:1px solid var(--bd)!important}}
 .block-container{{padding:0!important;max-width:100%!important}}
-.nav{{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:200;box-shadow:0 1px 8px rgba(0,0,0,.06)}}
+.nav{{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:200;box-shadow:0 1px 8px rgba(0,0,0,.08)}}
+.sidebar{{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--s1);border-right:1px solid var(--bd);z-index:100;display:flex;flex-direction:column;padding-top:56px}}
+.sb-logo{{padding:1.25rem 1.25rem .75rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}}
+.sb-icon{{width:32px;height:32px;background:linear-gradient(135deg,#7c3aed,#a371f7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0}}
+.sb-brand{{font-size:14px;font-weight:600;color:var(--tx)}}.sb-brand em{{color:var(--bl);font-style:normal}}
+.sb-section{{padding:.75rem .875rem .25rem;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);font-family:'JetBrains Mono',monospace}}
+.sb-item{{display:flex;align-items:center;gap:10px;padding:.625rem 1rem;margin:1px .5rem;border-radius:8px;font-size:13px;color:var(--t2);cursor:pointer;transition:all .15s;text-decoration:none}}
+.sb-item:hover{{background:var(--blbg);color:var(--tx)}}
+.sb-item.active{{background:var(--blbg);color:var(--bl);font-weight:500;border:1px solid var(--blbd)}}
+.sb-icon-sm{{width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}}
+.sb-badge{{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--rdbg);color:var(--rd);border:1px solid var(--rdbd);font-family:'JetBrains Mono',monospace}}
+.sb-footer{{margin-top:auto;padding:1rem;border-top:1px solid var(--bd)}}
+.sb-user{{display:flex;align-items:center;gap:8px}}
+.sb-avatar{{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a371f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}}
+.sb-uname{{font-size:12px;font-weight:500;color:var(--tx)}}
+.sb-urole{{font-size:11px;color:var(--t3)}}
+.main-content{{margin-left:220px}}
 .nav-logo{{display:flex;align-items:center;gap:10px}}
 .nav-icon{{width:30px;height:30px;background:var(--gr);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#000}}
 .nav-brand{{font-size:15px;font-weight:500;color:var(--tx)}}.nav-brand em{{color:var(--gr);font-style:normal}}
@@ -743,48 +760,92 @@ def export_excel(clients):
 
 # ── NAV ───────────────────────────────────────────────────────────────────────
 def show_nav():
-    # Inject CSS first
     st.markdown(get_theme_css(), unsafe_allow_html=True)
-    
 
     user    = st.session_state.get("user_name","")
     company = st.session_state.get("user_company","")
     role    = st.session_state.get("user_role","advisor")
     plan    = st.session_state.get("user_plan","free")
-    rl = "Owner" if role=="owner" else "Advisor"
-    plan_colors = {"free":"#6e7681","starter":"#58a6ff","growth":"#3fb950","firm":"#d29922"}
-    pc = plan_colors.get(plan,"#6e7681")
-    theme = st.session_state.get("theme", "dark")
-    icon  = "☀️" if theme == "dark" else "🌙"
+    screen  = st.session_state.get("screen","dashboard")
+    rl      = "Owner" if role=="owner" else "Advisor"
+    plan_colors = {"free":"#6e7681","starter":"#a371f7","growth":"#3fb950","firm":"#d29922"}
+    pc      = plan_colors.get(plan,"#6e7681")
+    theme   = st.session_state.get("theme","dark")
+    icon    = "☀️" if theme=="dark" else "🌙"
+    initial = user[0].upper() if user else "A"
 
-    st.markdown(f"""<div class="nav">
-      <div class="nav-logo">
-        <div class="nav-icon">⚡</div>
-        <span class="nav-brand">Advisor<em>IQ</em></span>
+    at_risk_count = len([c for c in st.session_state.get("clients",[]) if c.get("churn",0)>50])
+
+    st.markdown(f"""
+    <div class="sidebar">
+      <div class="sb-logo">
+        <div class="sb-icon">⚡</div>
+        <div>
+          <div class="sb-brand">Advisor<em>IQ</em></div>
+          <div style="font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace">{plan.upper()}</div>
+        </div>
       </div>
-      <div class="nav-right">
-        <span class="nav-user">{user} · {company}</span>
-        <span class="nav-role">{rl}</span>
-        <span style="font-size:11px;padding:2px 8px;border-radius:12px;background:{pc}18;color:{pc};border:1px solid {pc}44;font-family:'JetBrains Mono',monospace;font-weight:500">{plan.upper()}</span>
+
+      <div class="sb-section">Main</div>
+      <a class="sb-item {'active' if screen=='dashboard' else ''}" onclick="void(0)">
+        <span class="sb-icon-sm">📊</span> Dashboard
+        {'<span class="sb-badge">' + str(at_risk_count) + '</span>' if at_risk_count > 0 else ''}
+      </a>
+      <a class="sb-item {'active' if screen=='upload' else ''}" onclick="void(0)">
+        <span class="sb-icon-sm">📂</span> Upload Data
+      </a>
+
+      <div class="sb-section">Intelligence</div>
+      <a class="sb-item" onclick="void(0)">
+        <span class="sb-icon-sm">🎯</span> Priority Rankings
+      </a>
+      <a class="sb-item" onclick="void(0)">
+        <span class="sb-icon-sm">⚡</span> Next Best Action
+      </a>
+      <a class="sb-item" onclick="void(0)">
+        <span class="sb-icon-sm">💬</span> WhatsApp Drafts
+      </a>
+
+      <div class="sb-section">Settings</div>
+      <a class="sb-item {'active' if screen=='settings' else ''}" onclick="void(0)">
+        <span class="sb-icon-sm">⚙</span> Settings
+      </a>
+
+      <div class="sb-footer">
+        <div class="sb-user">
+          <div class="sb-avatar">{initial}</div>
+          <div>
+            <div class="sb-uname">{user}</div>
+            <div class="sb-urole">{company}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Top nav — slim
+    st.markdown(f"""<div class="nav" style="padding-left:236px">
+      <div style="font-size:12px;color:var(--t3);font-family:'JetBrains Mono',monospace">
+        AdvisorIQ · {rl}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;padding:2px 8px;border-radius:12px;background:{pc}18;color:{pc};border:1px solid {pc}44;font-family:'JetBrains Mono',monospace">{plan.upper()}</span>
       </div>
     </div>""", unsafe_allow_html=True)
 
-    c1,c2,c3,c4,c5 = st.columns([6,1,1,1,1])
-    with c2:
-        if st.button(icon, key="nav_theme", help="Toggle light/dark mode"):
-            st.session_state.theme = "light" if theme == "dark" else "dark"
-            st.rerun()
-    with c3:
-        if st.button("⬆ Upload", key="nav_up"):
-            st.session_state.pop("kpi_open", None)
-            st.session_state.screen = "upload"; st.rerun()
-    with c4:
-        if st.button("⚙ Settings", key="nav_set"):
-            st.session_state.screen = "settings"; st.rerun()
-    with c5:
-        if st.button("Sign out", key="nav_so"):
-            for k in list(st.session_state.keys()): del st.session_state[k]
-            st.rerun()
+    # Sidebar buttons (Streamlit)
+    with st.sidebar:
+        if st.button(icon, key="nav_theme"):
+            st.session_state.theme = "light" if theme=="dark" else "dark"; st.rerun()
+        if st.button("📊 Dashboard", key="sb_dash"):
+            st.session_state.screen="dashboard"; st.rerun()
+        if st.button("📂 Upload", key="sb_up"):
+            st.session_state.pop("kpi_open",None)
+            st.session_state.screen="upload"; st.rerun()
+        if st.button("⚙ Settings", key="sb_set"):
+            st.session_state.screen="settings"; st.rerun()
+        if st.button("Sign out", key="sb_so"):
+            for k in list(st.session_state.keys()): del st.session_state[k]; st.rerun()
 
 # ── LOGIN ─────────────────────────────────────────────────────────────────────
 def show_login():
@@ -863,7 +924,7 @@ def show_login():
 # ── UPLOAD ────────────────────────────────────────────────────────────────────
 def show_upload():
     show_nav()
-    st.markdown('<div class="bc">Upload \u2192 Mapping \u2192 <em>Dashboard</em></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     user_id = st.session_state.get("user_id")
@@ -977,7 +1038,7 @@ def show_upload():
 # ── MAPPING ───────────────────────────────────────────────────────────────────
 def show_mapping(df):
     show_nav()
-    st.markdown('<div class="bc">Upload → <em>Column mapping</em> → Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     # ── Data cleaning ─────────────────────────────────────────────────────
@@ -1046,7 +1107,7 @@ def show_mapping(df):
 # ── SETTINGS ──────────────────────────────────────────────────────────────────
 def show_settings():
     show_nav()
-    st.markdown('<div class="bc">\u2192 <em>Settings</em></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     user_id = st.session_state.get("user_id")
@@ -1163,7 +1224,7 @@ def show_settings():
 # ── DASHBOARD ─────────────────────────────────────────────────────────────────
 def show_dashboard(clients):
     show_nav()
-    st.markdown('<div class="bc">Upload \u2192 Mapping \u2192 <em>Intelligence Dashboard</em></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     aum      = sum(_num(c.get("portfolio",0)) for c in clients)
