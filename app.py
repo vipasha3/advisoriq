@@ -12,7 +12,7 @@ st.set_page_config(
     page_title="AdvisorIQ",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 
@@ -766,86 +766,40 @@ def show_nav():
     company = st.session_state.get("user_company","")
     role    = st.session_state.get("user_role","advisor")
     plan    = st.session_state.get("user_plan","free")
-    screen  = st.session_state.get("screen","dashboard")
-    rl      = "Owner" if role=="owner" else "Advisor"
-    plan_colors = {"free":"#6e7681","starter":"#a371f7","growth":"#3fb950","firm":"#d29922"}
-    pc      = plan_colors.get(plan,"#6e7681")
-    theme   = st.session_state.get("theme","dark")
-    icon    = "☀️" if theme=="dark" else "🌙"
-    initial = user[0].upper() if user else "A"
+    rl = "Owner" if role=="owner" else "Advisor"
+    plan_colors = {"free":"#6e7681","starter":"#58a6ff","growth":"#3fb950","firm":"#d29922"}
+    pc = plan_colors.get(plan,"#6e7681")
+    theme = st.session_state.get("theme", "dark")
+    icon  = "☀️" if theme == "dark" else "🌙"
 
-    at_risk_count = len([c for c in st.session_state.get("clients",[]) if c.get("churn",0)>50])
-
-    st.markdown(f"""
-    <div class="sidebar">
-      <div class="sb-logo">
-        <div class="sb-icon">⚡</div>
-        <div>
-          <div class="sb-brand">Advisor<em>IQ</em></div>
-          <div style="font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace">{plan.upper()}</div>
-        </div>
+    st.markdown(f"""<div class="nav">
+      <div class="nav-logo">
+        <div class="nav-icon">⚡</div>
+        <span class="nav-brand">Advisor<em>IQ</em></span>
       </div>
-
-      <div class="sb-section">Main</div>
-      <a class="sb-item {'active' if screen=='dashboard' else ''}" onclick="void(0)">
-        <span class="sb-icon-sm">📊</span> Dashboard
-        {'<span class="sb-badge">' + str(at_risk_count) + '</span>' if at_risk_count > 0 else ''}
-      </a>
-      <a class="sb-item {'active' if screen=='upload' else ''}" onclick="void(0)">
-        <span class="sb-icon-sm">📂</span> Upload Data
-      </a>
-
-      <div class="sb-section">Intelligence</div>
-      <a class="sb-item" onclick="void(0)">
-        <span class="sb-icon-sm">🎯</span> Priority Rankings
-      </a>
-      <a class="sb-item" onclick="void(0)">
-        <span class="sb-icon-sm">⚡</span> Next Best Action
-      </a>
-      <a class="sb-item" onclick="void(0)">
-        <span class="sb-icon-sm">💬</span> WhatsApp Drafts
-      </a>
-
-      <div class="sb-section">Settings</div>
-      <a class="sb-item {'active' if screen=='settings' else ''}" onclick="void(0)">
-        <span class="sb-icon-sm">⚙</span> Settings
-      </a>
-
-      <div class="sb-footer">
-        <div class="sb-user">
-          <div class="sb-avatar">{initial}</div>
-          <div>
-            <div class="sb-uname">{user}</div>
-            <div class="sb-urole">{company}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Top nav — slim
-    st.markdown(f"""<div class="nav" style="padding-left:236px">
-      <div style="font-size:12px;color:var(--t3);font-family:'JetBrains Mono',monospace">
-        AdvisorIQ · {rl}
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:11px;padding:2px 8px;border-radius:12px;background:{pc}18;color:{pc};border:1px solid {pc}44;font-family:'JetBrains Mono',monospace">{plan.upper()}</span>
+      <div class="nav-right">
+        <span class="nav-user">{user} · {company}</span>
+        <span class="nav-role">{rl}</span>
+        <span style="font-size:11px;padding:2px 8px;border-radius:12px;background:{pc}18;color:{pc};border:1px solid {pc}44;font-family:'JetBrains Mono',monospace;font-weight:500">{plan.upper()}</span>
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # Sidebar buttons (Streamlit)
-    with st.sidebar:
-        if st.button(icon, key="nav_theme"):
-            st.session_state.theme = "light" if theme=="dark" else "dark"; st.rerun()
-        if st.button("📊 Dashboard", key="sb_dash"):
-            st.session_state.screen="dashboard"; st.rerun()
-        if st.button("📂 Upload", key="sb_up"):
-            st.session_state.pop("kpi_open",None)
-            st.session_state.screen="upload"; st.rerun()
-        if st.button("⚙ Settings", key="sb_set"):
-            st.session_state.screen="settings"; st.rerun()
-        if st.button("Sign out", key="sb_so"):
-            for k in list(st.session_state.keys()): del st.session_state[k]; st.rerun()
+    c1,c2,c3,c4,c5 = st.columns([6,1,1,1,1])
+    with c2:
+        if st.button(icon, key="nav_theme", help="Toggle light/dark mode"):
+            st.session_state.theme = "light" if theme == "dark" else "dark"
+            st.rerun()
+    with c3:
+        if st.button("⬆ Upload", key="nav_up"):
+            st.session_state.pop("kpi_open", None)
+            st.session_state.screen = "upload"; st.rerun()
+    with c4:
+        if st.button("⚙ Settings", key="nav_set"):
+            st.session_state.screen = "settings"; st.rerun()
+    with c5:
+        if st.button("Sign out", key="nav_so"):
+            for k in list(st.session_state.keys()): del st.session_state[k]
+            st.rerun()
 
 # ── LOGIN ─────────────────────────────────────────────────────────────────────
 def show_login():
@@ -924,7 +878,7 @@ def show_login():
 # ── UPLOAD ────────────────────────────────────────────────────────────────────
 def show_upload():
     show_nav()
-    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+    st.markdown('<div class="bc">Upload · Mapping · <em>Dashboard</em></div>', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     user_id = st.session_state.get("user_id")
@@ -1038,7 +992,7 @@ def show_upload():
 # ── MAPPING ───────────────────────────────────────────────────────────────────
 def show_mapping(df):
     show_nav()
-    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+    st.markdown('<div class="bc">Upload · <em>Column mapping</em> · Dashboard</div>', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     # ── Data cleaning ─────────────────────────────────────────────────────
@@ -1107,7 +1061,7 @@ def show_mapping(df):
 # ── SETTINGS ──────────────────────────────────────────────────────────────────
 def show_settings():
     show_nav()
-    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+    st.markdown('<div class="bc">→ <em>Settings</em></div>', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     user_id = st.session_state.get("user_id")
@@ -1224,7 +1178,7 @@ def show_settings():
 # ── DASHBOARD ─────────────────────────────────────────────────────────────────
 def show_dashboard(clients):
     show_nav()
-    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+    st.markdown('<div class="bc">Upload · Mapping · <em>Intelligence Dashboard</em></div>', unsafe_allow_html=True)
     st.markdown('<div class="wrap">', unsafe_allow_html=True)
 
     aum      = sum(_num(c.get("portfolio",0)) for c in clients)
