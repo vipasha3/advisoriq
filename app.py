@@ -1048,11 +1048,46 @@ def show_mapping(df):
                     if ML_OK:
                         clients = predict_batch(clients)
                     merged = 0
+
+            # ── Upload summary ─────────────────────────────
+            total   = len(clients)
+            dupes_r = df.attrs.get("dupes_removed", 0)
+            miss_r  = int(df.isnull().sum().sum())
+            high_c  = len([c for c in clients if c.get("priority")=="High"])
+            risk_c  = len([c for c in clients if c.get("churn",0)>50])
+
+            st.markdown(
+                "<div style='background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.25rem;margin:1rem 0'>"
+                "<div style='font-size:14px;font-weight:600;color:var(--tx);margin-bottom:1rem'>✅ Data processed successfully</div>"
+                "<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px'>"
+                "<div style='background:var(--grbg);border:1px solid var(--grbd);border-radius:8px;padding:.75rem'>"
+                "<div style='font-size:1.3rem;font-weight:700;color:var(--gr)'>" + str(total) + "</div>"
+                "<div style='font-size:11px;color:var(--t2)'>clients processed</div></div>"
+                "<div style='background:var(--blbg);border:1px solid var(--blbd);border-radius:8px;padding:.75rem'>"
+                "<div style='font-size:1.3rem;font-weight:700;color:var(--bl)'>" + str(high_c) + "</div>"
+                "<div style='font-size:11px;color:var(--t2)'>ready to act</div></div>"
+                "<div style='background:var(--rdbg);border:1px solid var(--rdbd);border-radius:8px;padding:.75rem'>"
+                "<div style='font-size:1.3rem;font-weight:700;color:var(--rd)'>" + str(risk_c) + "</div>"
+                "<div style='font-size:11px;color:var(--t2)'>leaving risk</div></div>"
+                "<div style='background:var(--ambg);border:1px solid var(--ambd);border-radius:8px;padding:.75rem'>"
+                "<div style='font-size:1.3rem;font-weight:700;color:var(--am)'>" + str(dupes_r) + "</div>"
+                "<div style='font-size:11px;color:var(--t2)'>duplicates removed</div></div>"
+                "</div>"
+                + (f"<div style='margin-top:.75rem;font-size:12px;color:var(--t2)'>⚠ {miss_r} missing values auto-filled</div>" if miss_r > 0 else "") +
+                "</div>",
+                unsafe_allow_html=True
+            )
+
+            import time; time.sleep(2)
+            # ──────────────────────────────────────────────
+
             st.session_state.clients = clients
             st.session_state.merged_count = merged
             if DB_OK and st.session_state.get("user_id"):
                 db.save_clients(st.session_state.user_id, clients)
             st.session_state.screen = "dashboard"; st.rerun()
+    
+    
     with c2:
         if st.button("\u2190 Back"):
             st.session_state.screen = "upload"; st.rerun()
