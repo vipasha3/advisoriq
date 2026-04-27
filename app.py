@@ -1300,6 +1300,44 @@ def show_dashboard(clients):
       </div>
     </div>""", unsafe_allow_html=True)
 
+    # ── Advisor Income Estimator ──────────────────────────────────────────
+    annual_comm   = round(aum * 0.007)
+    at_risk_comm  = round(risk_aum * 0.007)
+    sip_potential = sum(_num(c.get("portfolio",0)) for c in no_sip) * 0.003
+    new_sip_comm  = round(sip_potential)
+
+    st.markdown(
+        "<div style='background:linear-gradient(135deg,rgba(163,113,247,.12),rgba(88,166,255,.08));border:1px solid var(--blbd);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem'>"
+        "<div style='font-size:11px;font-weight:600;color:var(--bl);font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem'>💼 Your Estimated Annual Income</div>"
+        "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px'>"
+
+        "<div>"
+        "<div style='font-size:1.2rem;font-weight:700;color:var(--gr)'>" + _fi(annual_comm) + "</div>"
+        "<div style='font-size:11px;color:var(--t2);margin-top:2px'>Total commission this year</div>"
+        "<div style='font-size:10px;color:var(--t3);font-family:JetBrains Mono,monospace;margin-top:2px'>Based on 0.7% of AUM</div>"
+        "</div>"
+
+        "<div>"
+        "<div style='font-size:1.2rem;font-weight:700;color:var(--rd)'>" + _fi(at_risk_comm) + "</div>"
+        "<div style='font-size:11px;color:var(--t2);margin-top:2px'>Income at risk if clients leave</div>"
+        "<div style='font-size:10px;color:var(--t3);font-family:JetBrains Mono,monospace;margin-top:2px'>" + str(len(at_risk)) + " clients may switch advisor</div>"
+        "</div>"
+
+        "<div>"
+        "<div style='font-size:1.2rem;font-weight:700;color:var(--am)'>" + _fi(new_sip_comm) + "</div>"
+        "<div style='font-size:11px;color:var(--t2);margin-top:2px'>New income if SIPs start</div>"
+        "<div style='font-size:10px;color:var(--t3);font-family:JetBrains Mono,monospace;margin-top:2px'>" + str(len(no_sip)) + " clients have no SIP yet</div>"
+        "</div>"
+
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True
+    )
+    # ─────────────────────────────────────────────────────────────────────
+
+    # Data Health Score
+    total_fields = len(clients) * 7
+
     # Data Health Score
     total_fields = len(clients) * 7  # 7 key fields per client
     filled = sum(
