@@ -615,7 +615,8 @@ section[data-testid=stSidebar]{{background:var(--s1)!important}}
 .waqm{{font-size:13px;color:var(--t2);font-style:italic;line-height:1.55}}
 .abtns{{display:flex;gap:8px;margin-top:.875rem}}
 .btn-wa{{font-size:12px;padding:5px 14px;border-radius:6px;font-weight:500;background:rgba(37,211,102,.1);color:#25d366;border:1px solid rgba(37,211,102,.3);text-decoration:none;font-family:'DM Mono',monospace;display:inline-block}}
-.evgrid{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}
+.evgrid{{display:grid;grid-template-columns:1fr 1fr;gap:14px;grid-auto-rows:auto}}
+.evcard{{height:100%}}
 .evcard{{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:1.25rem}}
 .evcard:hover{{border-color:var(--bd2)}}
 .evtop{{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.875rem}}
@@ -1789,29 +1790,139 @@ def show_dashboard(clients):
     with tab3:
         st.markdown('<div style="height:.75rem"></div>', unsafe_allow_html=True)
         st.markdown('<div class="mhd"><div class="mic mam">\u2726</div><div><div class="mtitle">Event Intelligence</div><div class="msub">Event ideas based on your client data \u00b7 Expected returns</div></div></div>', unsafe_allow_html=True)
-        hni_n    = ", ".join(c.get("name","") for c in hni) or "—"
+    
         senior   = [c for c in clients if int(float(c.get("age") or 0)) >= 55]
-        mid      = [c for c in clients if c.get("priority") == "Medium"]
-        mid_n    = ", ".join(c.get("name","") for c in mid) or "—"
-        senior_n = ", ".join(c.get("name","") for c in senior) or "—"
-        mid_aum  = _fi(sum(_num(c.get("portfolio",0)) for c in mid))
-        hni_aum  = _fi(sum(_num(c.get("portfolio",0)) for c in hni))
-        hni_pct  = round(sum(_num(c.get("portfolio",0)) for c in hni) / max(aum,1) * 100, 1)
+        mid      = [c for c in clients if c.get("priority") in ("Medium","Low") and _num(c.get("portfolio",0)) > 2e5]
+        
+        # Smart event logic based on actual data
+        inactive_hni = [c for c in hni if "Inactive 6m+" in c.get("flags",[])]
+        inactive_hni_names = ", ".join(c.get("name","") for c in inactive_hni) or "—"
+        inactive_hni_aum = sum(_num(c.get("portfolio",0)) for c in inactive_hni)
+        
+        no_sip_mid = [c for c in clients if "No SIP" in c.get("flags",[]) and _num(c.get("portfolio",0)) > 3e5]
+        no_sip_mid_names = ", ".join(c.get("name","") for c in no_sip_mid[:5]) or "—"
 
-        evs = [
-            ("high impact","#d29922","Client Conversion Workshop",
-             f"You have {len(mid)} clients who are in the middle \u2014 not fully active, not gone either. A small group workshop showing real portfolio growth examples could be just the push they need to become more engaged. Suggested invite list: {mid_n}.",
-             f"ROI: ~{_fi(sum(_num(c.get('portfolio',0)) for c in mid)*0.08)} potential uplift",
-             f"Workshop \u00b7 {len(mid)} clients \u00b7 This month"),
-            ("medium impact","#58a6ff","Top Client Appreciation Event",
-             f"Your {len(hni)} high-value clients hold {hni_pct}% of your total AUM ({hni_aum}). A private, exclusive event \u2014 dinner, golf, or a market outlook session \u2014 keeps them loyal and often leads to referrals. Suggested invite list: {hni_n}.",
-             f"ROI: ~{_fi(sum(_num(c.get('portfolio',0)) for c in hni)*0.04)} incremental",
-             f"Private Event \u00b7 {len(hni)} top clients \u00b7 This quarter"),
-            ("medium impact","#58a6ff","Annual Portfolio Review Meet",
-             f"Invite all {len(clients)} clients for a yearly review session. Walk them through how their money has grown, what is working, and what the plan is for the next year. Clients who attend these meetings rarely leave. Senior clients to prioritise: {senior_n}.",
-             "ROI: Long-term loyalty \u00b7 Fewer client exits",
-             f"Group Meet \u00b7 All {len(clients)} clients \u00b7 Yearly"),
-        ]
+        senior_inactive = [c for c in clients if int(float(c.get("age") or 0)) >= 55 and "Inactive 6m+" in c.get("flags",[])]
+        senior_names = ", ".join(c.get("name","") for c in senior_inactive[:5]) or "—"
+
+        # ── Dynamic Event Generator ───────────────────────────────────────
+        import calendar
+        current_month = now_ist().month
+        current_month_name = now_ist().strftime("%B")
+        next_month_name = now_ist().replace(month=current_month%12+1).strftime("%B") if current_month < 12 else "January"
+
+        # Smart timing logic
+        def best_event_month(base_month):
+            # Avoid Dec (holidays) and March (tax season rush)
+            avoid = [12, 3]
+            m = base_month
+            for _ in range(4):
+                if m not in avoid:
+                    return calendar.month_name[m]
+                m = m % 12 + 1
+            return calendar.month_name[base_month]
+
+        # Budget estimator
+        def event_budget(n_clients, event_type):
+            if event_type == "dinner":
+                per_head = 2500
+                venue = 5000
+            elif event_type == "workshop":
+                per_head = 500
+                venue = 3000
+            else:  # meeting
+                per_head = 0
+                venue = 0
+            total = (n_clients * per_head) + venue
+            return _fi(total), total
+
+        evs = []
+
+        # ── Event 1: HNI Retention (only if inactive HNIs exist) ──────────
+        if len(inactive_hni) > 0:
+            budget_str, budget_num = event_budget(len(inactive_hni), "dinner")
+            ann_comm = round(inactive_hni_aum * 0.007)
+            roi_x = round(ann_comm / max(budget_num, 1) * 100)
+            best_month = best_event_month(current_month + 1)
+            evs.append((
+                "🔴 URGENT","#f85149","HNI Retention Dinner",
+                f"You have {len(inactive_hni)} high-value clients who haven't heard from you in 6+ months: {inactive_hni_names}. Together they hold {_fi(inactive_hni_aum)} — that is {round(inactive_hni_aum/max(aum,1)*100,1)}% of your book. One dinner could protect {_fi(ann_comm)} in annual commission.",
+                f"Budget: ~{budget_str} · ROI: {roi_x}x · Protects {_fi(ann_comm)}/year",
+                f"Private Dinner · {len(inactive_hni)} clients · Best time: {best_month}"
+            ))
+        else:
+            evs.append((
+                "✅ DONE","#3fb950","HNI Retention — No Action Needed",
+                f"All your high-value clients are actively engaged. No immediate retention event needed. Keep up the regular contact — review this again next month.",
+                f"Status: Healthy · Review again in {next_month_name}",
+                f"No event needed · Check monthly"
+            ))
+
+        # ── Event 2: SIP Workshop (only if no-SIP clients exist) ──────────
+        if len(no_sip_mid) > 0:
+            budget_str2, budget_num2 = event_budget(len(no_sip_mid), "workshop")
+            sip_potential_clients = max(1, round(len(no_sip_mid) * 0.6))
+            new_income = round(sip_potential_clients * 8000 * 12 * 0.01)
+            best_month2 = best_event_month(current_month + 2)
+
+            # Tax season tip
+            tax_tip = ""
+            if current_month in [1, 2]:
+                tax_tip = " January-February is perfect — clients are looking for tax-saving investments."
+            elif current_month == 12:
+                tax_tip = " December is ideal — year-end financial planning mindset."
+
+            evs.append((
+                "💰 HIGH ROI","#d29922","SIP Conversion Workshop",
+                f"You have {len(no_sip_mid)} clients with portfolios but no monthly SIP: {no_sip_mid_names}. A 45-minute group session with a live SIP calculator converts 60%+ of attendees. Budget: {budget_str2} for the event. If {sip_potential_clients} clients start ₹8,000/month SIP, you earn {_fi(new_income)} new annual income.{tax_tip}",
+                f"Budget: ~{budget_str2} · New income: +{_fi(new_income)}/year · {sip_potential_clients} conversions expected",
+                f"Group Workshop · {len(no_sip_mid)} clients · Best time: {best_month2}"
+            ))
+        else:
+            evs.append((
+                "✅ DONE","#3fb950","SIP Coverage — No Action Needed",
+                f"All eligible clients already have active SIPs. Focus on increasing SIP amounts for existing clients instead.",
+                f"Status: Good coverage · Consider SIP increase campaign",
+                f"No event needed"
+            ))
+
+        # ── Event 3: Senior Review (always relevant, timing varies) ────────
+        if len(senior_inactive) > 0:
+            budget_str3, _ = event_budget(0, "meeting")
+            best_month3 = best_event_month(current_month + 1)
+
+            # Festival timing tip
+            festival_tip = ""
+            if current_month in [9, 10]:
+                festival_tip = " Post-Diwali is perfect — clients are in a positive, generous mindset."
+            elif current_month in [3, 4]:
+                festival_tip = " Post-financial year is ideal — clients want to review their returns."
+
+            evs.append((
+                "🤝 TRUST","#58a6ff","Senior Client 1-on-1 Reviews",
+                f"Your {len(senior_inactive)} senior clients (55+) are inactive: {senior_names}. Senior clients respond 3x better to personal meetings than WhatsApp. No venue cost — meet at their home or your office. One hour per client, {len(senior_inactive)} meetings = {len(senior_inactive)} hours of your time to protect {_fi(round(sum(_num(c.get('portfolio',0)) for c in senior_inactive)*0.007))} in annual commission.{festival_tip}",
+                f"Budget: ₹0 · Protects {_fi(round(sum(_num(c.get('portfolio',0)) for c in senior_inactive)*0.007))}/year · {len(senior_inactive)} hours investment",
+                f"1-on-1 Meetings · {len(senior_inactive)} clients · Best time: {best_month3}"
+            ))
+        else:
+            evs.append((
+                "✅ DONE","#3fb950","Senior Clients — Engaged",
+                f"All your senior clients are actively engaged. Great relationship management!",
+                f"Status: Healthy",
+                f"No action needed"
+            ))
+
+        # ── Event 4: Nominee Drive (if compliance gap exists) ─────────────
+        if len(no_nom) >= 3:
+            best_month4 = best_event_month(current_month)
+            nom_names = ", ".join(c.get("name","") for c in no_nom[:4]) or "—"
+            evs.append((
+                "📋 COMPLIANCE","#a371f7","Nominee Filing Camp",
+                f"You have {len(no_nom)} clients without nominee — {nom_names}. This is a compliance risk for you and a legal risk for their families. Host a 30-minute digital form-filling session. Takes 10 minutes per client. Budget: zero. Builds enormous trust.",
+                f"Budget: ₹0 · Compliance risk resolved · Trust builder",
+                f"Online/Office · {len(no_nom)} clients · This week"
+            ))
+        
         rows_e = ""
         for tag,tc,title,body,roi,meta_str in evs:
             m_parts = meta_str.split("\u00b7")
