@@ -318,23 +318,68 @@ def process_dataframe(df, mapping):
         clients.append(c)
     seen_p={}; seen_n={}; out=[]; merged=0
     for c in clients:
-        ph=c.get("phone","").strip(); nm=c.get("name","").strip().lower()
+        ph=c.get("phone","").strip()
+        nm=c.get("name","").strip().lower()
         p=float(str(c.get("portfolio","0")).replace(",","") or 0)
+
+        existing = None
         if ph and len(ph)>=10 and ph in seen_p:
-            ex=seen_p[ph]
-            if p>float(str(ex.get("portfolio","0")).replace(",","") or 0):
-                out[out.index(ex)]=c; seen_p[ph]=c
-            merged+=1
+            existing = seen_p[ph]
         elif nm and nm in seen_n:
-            ex=seen_n[nm]
-            if p>float(str(ex.get("portfolio","0")).replace(",","") or 0):
-                out[out.index(ex)]=c; seen_n[nm]=c
-            merged+=1
+            existing = seen_n[nm]
+
+        if existing:
+            # Smart merge — take BEST value from each field
+            merged_c = dict(existing)
+
+            # Portfolio — keep higher
+            ep = float(str(existing.get("portfolio","0")).replace(",","") or 0)
+            if p > ep:
+                merged_c["portfolio"] = c.get("portfolio", existing.get("portfolio"))
+
+            # SIP — keep higher
+            es = float(str(existing.get("sip","0")).replace(",","") or 0)
+            cs = float(str(c.get("sip","0")).replace(",","") or 0)
+            if cs > es:
+                merged_c["sip"] = c.get("sip")
+
+            # Last contact — keep more recent
+            try:
+                ed = pd.to_datetime(str(existing.get("lastContact","")), errors="coerce")
+                cd = pd.to_datetime(str(c.get("lastContact","")), errors="coerce")
+                if pd.notna(cd) and (pd.isna(ed) or cd > ed):
+                    merged_c["lastContact"] = c.get("lastContact")
+            except: pass
+
+            # Nominee — if either says Yes keep Yes
+            en = str(existing.get("nominee","")).lower()
+            cn = str(c.get("nominee","")).lower()
+            if cn == "yes" or en == "yes":
+                merged_c["nominee"] = "Yes"
+
+            # Phone — keep whichever is valid
+            if not existing.get("phone") and c.get("phone"):
+                merged_c["phone"] = c.get("phone")
+
+            # Re-score with merged data
+            merged_c["score"]    = _score_c(merged_c)
+            merged_c["churn"]    = _churn_c(merged_c)
+            merged_c["conv"]     = min(95, max(5, round(merged_c["score"]*0.65 + (100-merged_c["churn"])*0.35)))
+            merged_c["priority"] = "High" if merged_c["score"] >= 70 else ("Medium" if merged_c["score"] >= 45 else "Low")
+            merged_c["flags"]    = _flags_c(merged_c)
+
+            # Update in out list
+            idx = out.index(existing)
+            out[idx] = merged_c
+            if ph and len(ph)>=10: seen_p[ph] = merged_c
+            if nm: seen_n[nm] = merged_c
+            merged += 1
         else:
             out.append(c)
-            if ph and len(ph)>=10: seen_p[ph]=c
-            if nm: seen_n[nm]=c
-    out.sort(key=lambda x:x.get("score",0),reverse=True)
+            if ph and len(ph)>=10: seen_p[ph] = c
+            if nm: seen_n[nm] = c
+
+    out.sort(key=lambda x:x.get("score",0), reverse=True)
     return out
 
 try:
