@@ -1711,30 +1711,98 @@ def show_dashboard(clients):
 
             if is_exp:
                 sip_val = _fi(c.get("sip",0)) if _num(c.get("sip",0))>0 else "Not started"
-                insight = c.get("feature_importance", "No insight available")
                 wa_msg  = get_whatsapp_message(c)
                 ph      = c.get("phone","")
                 wl      = f"https://wa.me/{ph}?text={urllib.parse.quote(wa_msg)}" if ph else f"https://wa.me/?text={urllib.parse.quote(wa_msg)}"
 
+                # WHY NOW reasons
+                why_reasons = []
+                ma_c = _mago2(c.get("lastContact",""))
+                if ma_c > 6:
+                    why_reasons.append(f"No contact in {int(ma_c)} months")
+                if ma_c > 12:
+                    why_reasons.append("Relationship at serious risk")
+                if "No SIP" in c.get("flags",[]) and _num(c.get("portfolio",0)) > 5e5:
+                    why_reasons.append("Has portfolio but no SIP running")
+                if "No Nominee" in c.get("flags",[]):
+                    why_reasons.append("Nominee not filed — compliance risk")
+                if c.get("churn",0) > 60:
+                    why_reasons.append(f"Leaving risk at {c.get('churn',0)}% — critical")
+                if "High Value" in c.get("flags",[]):
+                    why_reasons.append(f"High value client — {_fi(c.get('portfolio',0))} at stake")
+                if not why_reasons:
+                    why_reasons.append("Routine relationship maintenance")
+
+                # URGENCY
+                churn = c.get("churn", 0)
+                if churn > 70 or ma_c > 12:
+                    urgency_label = "🔴 TODAY"
+                    urgency_color = "var(--rd)"
+                elif churn > 40 or ma_c > 6:
+                    urgency_label = "🟡 THIS WEEK"
+                    urgency_color = "var(--am)"
+                else:
+                    urgency_label = "🟢 THIS MONTH"
+                    urgency_color = "var(--gr)"
+
+                # EXPECTED RESULT
+                port = _num(c.get("portfolio",0))
+                annual_comm = round(port * 0.007)
+                if "No SIP" in c.get("flags",[]) and port > 5e5:
+                    expected = f"Start SIP → +{_fi(round(_num(c.get('sip',0) or 8000)*12*0.01))} new annual income"
+                elif churn > 50:
+                    expected = f"Retain client → protect {_fi(annual_comm)}/year commission"
+                elif "No Nominee" in c.get("flags",[]):
+                    expected = "File nominee → compliance resolved + trust built"
+                else:
+                    expected = f"Strengthen relationship → protect {_fi(annual_comm)}/year"
+
+                why_html = "".join(
+                    f"<div style='display:flex;align-items:center;gap:6px;margin-bottom:4px'>"
+                    f"<span style='color:var(--rd);font-size:11px'>→</span>"
+                    f"<span style='font-size:12px;color:var(--t2)'>{r}</span></div>"
+                    for r in why_reasons
+                )
+
                 st.markdown(
-                    "<div class='xin' style='margin-bottom:8px'>"
-                    "<div class='xlbl'>💡 What this means</div>"
-                    "<div class='xtxt'>" + generate_client_explanation(c) + "</div>"
-                    "<div style='margin-top:8px;font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace'>"
-                    "📅 Client since " + str(c.get("tenure","—")) +
-                    " · 📋 Nominee: " + str(c.get("nominee","—")) +
-                    " · 💰 SIP: " + sip_val +
+                    "<div style='border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:8px'>"
+
+                    # Header
+                    "<div style='background:var(--s2);padding:.75rem 1rem;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center'>"
+                    "<div style='font-size:13px;font-weight:600;color:var(--tx)'>" + str(c.get("name","")) + "</div>"
+                    "<div style='font-size:12px;font-weight:600;color:" + urgency_color + ";font-family:JetBrains Mono,monospace'>" + urgency_label + "</div>"
                     "</div>"
-                    "<div style='margin-top:10px;background:var(--s3);border-radius:6px;padding:.75rem;font-size:12px;color:var(--t2);font-style:italic'>"
-                    "📱 Suggested message: \"" + wa_msg + "\"</div>"
-                    "<div style='display:flex;gap:8px;margin-top:10px'>"
-                    "<a href='" + wl + "' target='_blank' style='font-size:12px;padding:5px 14px;border-radius:6px;font-weight:500;background:rgba(37,211,102,.1);color:#25d366;border:1px solid rgba(37,211,102,.3);text-decoration:none;font-family:JetBrains Mono,monospace'>💬 WhatsApp</a>"
-                    "<a href='tel:" + str(ph) + "' style='font-size:12px;padding:5px 14px;border-radius:6px;font-weight:500;background:var(--blbg);color:var(--bl);border:1px solid var(--blbd);text-decoration:none;font-family:JetBrains Mono,monospace'>📞 Call</a>"
+
+                    # Why Now
+                    "<div style='padding:.875rem 1rem;border-bottom:1px solid var(--bd)'>"
+                    "<div style='font-size:10px;font-weight:600;color:var(--bl);font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem'>WHY NOW</div>"
+                    + why_html +
+                    "</div>"
+
+                    # Expected Result
+                    "<div style='padding:.875rem 1rem;border-bottom:1px solid var(--bd)'>"
+                    "<div style='font-size:10px;font-weight:600;color:var(--gr);font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem'>EXPECTED RESULT</div>"
+                    "<div style='font-size:12px;color:var(--t2)'>" + expected + "</div>"
+                    "</div>"
+
+                    # Suggested Message
+                    "<div style='padding:.875rem 1rem;border-bottom:1px solid var(--bd);background:var(--s3)'>"
+                    "<div style='font-size:10px;font-weight:600;color:var(--am);font-family:JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem'>SUGGESTED MESSAGE</div>"
+                    "<div style='font-size:12px;color:var(--t2);font-style:italic'>\"" + wa_msg + "\"</div>"
+                    "</div>"
+
+                    # Action buttons
+                    "<div style='padding:.75rem 1rem;display:flex;gap:8px'>"
+                    "<a href='" + wl + "' target='_blank' style='font-size:12px;padding:6px 16px;border-radius:6px;font-weight:500;background:rgba(37,211,102,.1);color:#25d366;border:1px solid rgba(37,211,102,.3);text-decoration:none;font-family:JetBrains Mono,monospace'>💬 WhatsApp</a>"
+                    "<a href='tel:" + str(ph) + "' style='font-size:12px;padding:6px 16px;border-radius:6px;font-weight:500;background:var(--blbg);color:var(--bl);border:1px solid var(--blbd);text-decoration:none;font-family:JetBrains Mono,monospace'>📞 Call</a>"
+                    "<div style='margin-left:auto;font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace;align-self:center'>"
+                    "📅 Since " + str(c.get("tenure","—")) + " · 💰 SIP: " + sip_val + " · 📋 Nominee: " + str(c.get("nominee","—")) +
+                    "</div>"
                     "</div>"
                     "</div>",
                     unsafe_allow_html=True
                 )
-
+                
     # TAB 2 ── Smart Next Best Action
     with tab2:
         top_c  = clients[0] if clients else {}
